@@ -29,6 +29,7 @@ export interface 札作成リクエスト {
   readonly 作成者: string;
   readonly 担当者?: string;
   readonly ルーム名?: string;
+  readonly ラベル一覧?: readonly string[];
 }
 
 export function 札を作成する(baseUrl: string, 内容: 札作成リクエスト): Promise<Fudaba応答> {
@@ -46,6 +47,7 @@ export interface 札更新リクエスト {
   readonly 本文?: string;
   readonly 状態?: string;
   readonly 担当者?: string | null;
+  readonly ラベル一覧?: readonly string[];
 }
 
 export function 札を更新する(

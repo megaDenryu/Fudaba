@@ -3,6 +3,7 @@ import { メンバー名 } from "./メンバー名.js";
 import { 札 } from "./札.js";
 import { 札種別 } from "./札種別.js";
 import { 札状態 } from "./札状態.js";
+import { 札ラベル一覧 } from "./札ラベル一覧.js";
 import { 割当済み, 未割当 } from "./担当者.js";
 import { 未リンク, ルームにリンクする } from "./札リンク.js";
 
@@ -16,6 +17,7 @@ function 札を作る(上書き: Partial<Parameters<typeof 札.create>[0]> = {})
     担当者: 未割当,
     作成者: メンバー名.create("claude"),
     リンク: 未リンク,
+    ラベル一覧: 札ラベル一覧.空(),
     作成時刻ISO: "2026-07-14T00:00:00.000Z",
     更新時刻ISO: "2026-07-14T00:00:00.000Z",
     ...上書き,
@@ -53,6 +55,18 @@ describe("札", () => {
     expect(dto.ルーム名).toBe("dev");
   });
 
+  describe("ラベル一覧", () => {
+    it("toJSONは値一覧の配列に写像する", () => {
+      const dto = 札を作る({ ラベル一覧: 札ラベル一覧.create(["fudaba", "jimbo"]) }).toJSON();
+      expect(dto.ラベル一覧).toEqual(["fudaba", "jimbo"]);
+    });
+
+    it("未指定(空)の札はtoJSONで空配列になる", () => {
+      const dto = 札を作る().toJSON();
+      expect(dto.ラベル一覧).toEqual([]);
+    });
+  });
+
   describe("変更を適用する", () => {
     it("指定したフィールドだけを更新し、他は維持する", () => {
       const 元札 = 札を作る();
@@ -63,6 +77,7 @@ describe("札", () => {
           本文: undefined,
           状態: 札状態.create("進行中"),
           担当者: undefined,
+          ラベル一覧: undefined,
         },
         "2026-07-15T00:00:00.000Z",
       );
@@ -75,7 +90,14 @@ describe("札", () => {
     it("担当者へ未割当を明示指定すると解除される", () => {
       const 元札 = 札を作る({ 担当者: 割当済み(メンバー名.create("codex")) });
       const 更新後 = 元札.変更を適用する(
-        { 種別: undefined, タイトル: undefined, 本文: undefined, 状態: undefined, 担当者: 未割当 },
+        {
+          種別: undefined,
+          タイトル: undefined,
+          本文: undefined,
+          状態: undefined,
+          担当者: 未割当,
+          ラベル一覧: undefined,
+        },
         "2026-07-15T00:00:00.000Z",
       );
       expect(更新後.担当者).toEqual(未割当);
@@ -90,10 +112,43 @@ describe("札", () => {
           本文: undefined,
           状態: undefined,
           担当者: undefined,
+          ラベル一覧: undefined,
         },
         "2026-07-15T00:00:00.000Z",
       );
       expect(更新後.種別.値).toBe("バグ");
+    });
+
+    it("ラベル一覧を指定すると更新される", () => {
+      const 元札 = 札を作る({ ラベル一覧: 札ラベル一覧.create(["旧ラベル"]) });
+      const 更新後 = 元札.変更を適用する(
+        {
+          種別: undefined,
+          タイトル: undefined,
+          本文: undefined,
+          状態: undefined,
+          担当者: undefined,
+          ラベル一覧: 札ラベル一覧.create(["新ラベル"]),
+        },
+        "2026-07-15T00:00:00.000Z",
+      );
+      expect(更新後.ラベル一覧.値一覧).toEqual(["新ラベル"]);
+    });
+
+    it("ラベル一覧を省略すると維持される", () => {
+      const 元札 = 札を作る({ ラベル一覧: 札ラベル一覧.create(["維持されるラベル"]) });
+      const 更新後 = 元札.変更を適用する(
+        {
+          種別: undefined,
+          タイトル: undefined,
+          本文: undefined,
+          状態: undefined,
+          担当者: undefined,
+          ラベル一覧: undefined,
+        },
+        "2026-07-15T00:00:00.000Z",
+      );
+      expect(更新後.ラベル一覧.値一覧).toEqual(["維持されるラベル"]);
     });
   });
 });

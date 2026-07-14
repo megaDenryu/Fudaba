@@ -10,6 +10,11 @@ import {
   札リンクをDTO値にする,
   札リンクをDTO値から作る,
 } from "../domain/札リンク.js";
+import {
+  type 札ラベル一覧,
+  札ラベル一覧をDTO値にする,
+  札ラベル一覧をDTO値から作る,
+} from "../domain/札ラベル一覧.js";
 import { 札行に絞る, type 札行 } from "./行検証.js";
 
 function 行から札を復元する(行: 札行): 札 {
@@ -22,6 +27,7 @@ function 行から札を復元する(行: 札行): 札 {
     担当者: 担当者をDTO値から作る(行.assignee),
     作成者: メンバー名.create(行.creator),
     リンク: 札リンクをDTO値から作る(行.room_link),
+    ラベル一覧: 札ラベル一覧をDTO値から作る(行.labels),
     作成時刻ISO: 行.created_at,
     更新時刻ISO: 行.updated_at,
   });
@@ -38,13 +44,14 @@ export class 札リポジトリ {
     担当者: 担当者;
     作成者: メンバー名;
     リンク: 札リンク;
+    ラベル一覧: 札ラベル一覧;
   }): 札 {
     const 時刻ISO = new Date().toISOString();
     const 状態 = 札状態.既定();
     const 結果 = this.db
       .prepare(
-        `INSERT INTO fudaba_items (kind, title, body, status, assignee, creator, room_link, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO fudaba_items (kind, title, body, status, assignee, creator, room_link, labels, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         引数.種別.値,
@@ -54,6 +61,7 @@ export class 札リポジトリ {
         担当者をDTO値にする(引数.担当者),
         引数.作成者.値,
         札リンクをDTO値にする(引数.リンク),
+        札ラベル一覧をDTO値にする(引数.ラベル一覧),
         時刻ISO,
         時刻ISO,
       );
@@ -66,6 +74,7 @@ export class 札リポジトリ {
       担当者: 引数.担当者,
       作成者: 引数.作成者,
       リンク: 引数.リンク,
+      ラベル一覧: 引数.ラベル一覧,
       作成時刻ISO: 時刻ISO,
       更新時刻ISO: 時刻ISO,
     });
@@ -92,7 +101,7 @@ export class 札リポジトリ {
     this.db
       .prepare(
         `UPDATE fudaba_items
-         SET kind = ?, title = ?, body = ?, status = ?, assignee = ?, updated_at = ?
+         SET kind = ?, title = ?, body = ?, status = ?, assignee = ?, labels = ?, updated_at = ?
          WHERE id = ?`,
       )
       .run(
@@ -101,6 +110,7 @@ export class 札リポジトリ {
         更新後.本文,
         更新後.状態.値,
         担当者をDTO値にする(更新後.担当者),
+        札ラベル一覧をDTO値にする(更新後.ラベル一覧),
         更新時刻ISO,
         id.値,
       );

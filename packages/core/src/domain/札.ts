@@ -5,6 +5,7 @@ import { 札種別 } from "./札種別.js";
 import { 札状態 } from "./札状態.js";
 import { type 担当者, 担当者をDTO値にする } from "./担当者.js";
 import { type 札リンク, 札リンクをDTO値にする } from "./札リンク.js";
+import { 札ラベル一覧 } from "./札ラベル一覧.js";
 
 const タイトル最大文字数 = 200;
 const 本文最大文字数 = 20_000;
@@ -17,6 +18,7 @@ export interface 札変更内容 {
   readonly 本文: string | undefined;
   readonly 状態: 札状態 | undefined;
   readonly 担当者: 担当者 | undefined;
+  readonly ラベル一覧: 札ラベル一覧 | undefined;
 }
 
 // 人間とAIが共有する作業アイテム。WBS・バグシート・タスクリストの最小共通形（DESIGN.md参照）
@@ -30,6 +32,7 @@ export class 札 {
     readonly 担当者: 担当者,
     readonly 作成者: メンバー名,
     readonly リンク: 札リンク,
+    readonly ラベル一覧: 札ラベル一覧,
     readonly 作成時刻ISO: string,
     readonly 更新時刻ISO: string,
   ) {}
@@ -43,6 +46,7 @@ export class 札 {
     担当者: 担当者;
     作成者: メンバー名;
     リンク: 札リンク;
+    ラベル一覧: 札ラベル一覧;
     作成時刻ISO: string;
     更新時刻ISO: string;
   }): 札 {
@@ -64,6 +68,7 @@ export class 札 {
       引数.担当者,
       引数.作成者,
       引数.リンク,
+      引数.ラベル一覧,
       引数.作成時刻ISO,
       引数.更新時刻ISO,
     );
@@ -80,6 +85,7 @@ export class 札 {
       担当者: 変更.担当者 ?? this.担当者,
       作成者: this.作成者,
       リンク: this.リンク,
+      ラベル一覧: 変更.ラベル一覧 ?? this.ラベル一覧,
       作成時刻ISO: this.作成時刻ISO,
       更新時刻ISO,
     });
@@ -95,6 +101,7 @@ export class 札 {
       担当者: 担当者をDTO値にする(this.担当者),
       作成者: this.作成者.値,
       ルーム名: 札リンクをDTO値にする(this.リンク),
+      ラベル一覧: this.ラベル一覧.値一覧,
       作成時刻: this.作成時刻ISO,
       更新時刻: this.更新時刻ISO,
     };
@@ -110,6 +117,7 @@ export interface 札DTO {
   readonly 担当者: string | null;
   readonly 作成者: string;
   readonly ルーム名: string | null;
+  readonly ラベル一覧: readonly string[];
   readonly 作成時刻: string;
   readonly 更新時刻: string;
 }

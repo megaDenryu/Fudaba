@@ -3,11 +3,15 @@ import { メンバー名 } from "../domain/メンバー名.js";
 import { 札ID } from "../domain/札ID.js";
 import { 札種別 } from "../domain/札種別.js";
 import { 札状態 } from "../domain/札状態.js";
+import { 札ラベル一覧 } from "../domain/札ラベル一覧.js";
 import { 割当済み, 未割当 } from "../domain/担当者.js";
 import { 未リンク, ルームにリンクする } from "../domain/札リンク.js";
 import { 札ストア } from "./札ストア.js";
 
-function 追加する(ストア: 札ストア, 上書き: { タイトル?: string } = {}) {
+function 追加する(
+  ストア: 札ストア,
+  上書き: { タイトル?: string; ラベル一覧?: readonly string[] } = {},
+) {
   return ストア.追加する({
     種別: 札種別.create("バグ"),
     タイトル: 上書き.タイトル ?? "サンプル札",
@@ -15,6 +19,7 @@ function 追加する(ストア: 札ストア, 上書き: { タイトル?: strin
     担当者: 未割当,
     作成者: メンバー名.create("claude"),
     リンク: 未リンク,
+    ラベル一覧: 札ラベル一覧.create(上書き.ラベル一覧 ?? []),
   });
 }
 
@@ -43,6 +48,7 @@ describe("札ストア", () => {
         本文: undefined,
         状態: undefined,
         担当者: undefined,
+        ラベル一覧: undefined,
       });
 
       const 一覧 = ストア.一覧を取得する();
@@ -63,6 +69,7 @@ describe("札ストア", () => {
       本文: undefined,
       状態: 札状態.create("進行中"),
       担当者: 割当済み(メンバー名.create("codex")),
+      ラベル一覧: undefined,
     });
     expect(更新後?.状態.値).toBe("進行中");
     expect(更新後?.担当者).toEqual(割当済み(メンバー名.create("codex")));
@@ -79,6 +86,7 @@ describe("札ストア", () => {
       本文: undefined,
       状態: undefined,
       担当者: undefined,
+      ラベル一覧: undefined,
     });
     const 再取得 = ストア.IDで取得する(追加済み.id);
     expect(再取得?.種別.値).toBe("決定");
@@ -93,6 +101,7 @@ describe("札ストア", () => {
       担当者: 割当済み(メンバー名.create("codex")),
       作成者: メンバー名.create("claude"),
       リンク: ルームにリンクする("dev"),
+      ラベル一覧: 札ラベル一覧.空(),
     });
     const 更新後 = ストア.更新する(追加済み.id, {
       種別: undefined,
@@ -100,6 +109,7 @@ describe("札ストア", () => {
       本文: undefined,
       状態: undefined,
       担当者: 未割当,
+      ラベル一覧: undefined,
     });
     expect(更新後?.担当者).toEqual(未割当);
   });
@@ -112,7 +122,49 @@ describe("札ストア", () => {
       本文: undefined,
       状態: undefined,
       担当者: undefined,
+      ラベル一覧: undefined,
     });
     expect(結果).toBeNull();
+  });
+
+  describe("ラベル", () => {
+    it("追加時のラベル一覧が保持され、再取得後も反映される", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      const 追加済み = 追加する(ストア, { ラベル一覧: ["fudaba", "jimbo"] });
+      expect(追加済み.ラベル一覧.値一覧).toEqual(["fudaba", "jimbo"]);
+      const 再取得 = ストア.IDで取得する(追加済み.id);
+      expect(再取得?.ラベル一覧.値一覧).toEqual(["fudaba", "jimbo"]);
+    });
+
+    it("更新するでラベル一覧を差し替えられる", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      const 追加済み = 追加する(ストア, { ラベル一覧: ["旧"] });
+      const 更新後 = ストア.更新する(追加済み.id, {
+        種別: undefined,
+        タイトル: undefined,
+        本文: undefined,
+        状態: undefined,
+        担当者: undefined,
+        ラベル一覧: 札ラベル一覧.create(["新"]),
+      });
+      expect(更新後?.ラベル一覧.値一覧).toEqual(["新"]);
+    });
+
+    it("一覧を取得するにラベルフィルタを渡すと指定ラベルを全て持つ札だけ返る", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      追加する(ストア, { タイトル: "両方持つ", ラベル一覧: ["fudaba", "urgent"] });
+      追加する(ストア, { タイトル: "片方だけ", ラベル一覧: ["fudaba"] });
+      追加する(ストア, { タイトル: "無関係", ラベル一覧: ["boomyack"] });
+
+      const 絞り込み結果 = ストア.一覧を取得する({ ラベル一覧: ["fudaba", "urgent"] });
+      expect(絞り込み結果.map((札) => 札.タイトル)).toEqual(["両方持つ"]);
+    });
+
+    it("フィルタ未指定なら全件返る", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      追加する(ストア, { ラベル一覧: ["a"] });
+      追加する(ストア, { ラベル一覧: [] });
+      expect(ストア.一覧を取得する()).toHaveLength(2);
+    });
   });
 });
