@@ -16,9 +16,11 @@ import type { 札作成入力 } from "../通信/札型";
 import { 作成者名を読み込む, 作成者名を保存する } from "../作成者名記憶";
 import { 候補リストC } from "./候補リストC";
 import { 札種別選択肢 } from "./定数";
+import { ラベル文字列を配列にする } from "./ラベル入力パース";
 import * as styles from "./style.css";
 
 const 担当者候補リストID = "fudaba-新規作成フォーム-担当者候補";
+const ラベル候補リストID = "fudaba-新規作成フォーム-ラベル候補";
 
 export interface I新規作成フォーム配線 {
   on作成(内容: 札作成入力): void;
@@ -37,6 +39,8 @@ export class 新規作成フォーム
   private readonly _本文: TextAreaC;
   private readonly _担当者: TextInputC;
   private readonly _担当者候補 = new 候補リストC(担当者候補リストID);
+  private readonly _ラベル: TextInputC;
+  private readonly _ラベル候補 = new 候補リストC(ラベル候補リストID);
   private readonly _作成者: TextInputC;
 
   constructor() {
@@ -62,6 +66,10 @@ export class 新規作成フォーム
       placeholder: "担当者（省略可）",
       class: styles.フォーム担当者,
     }).setAttribute("list", 担当者候補リストID);
+    this._ラベル = textInput({
+      placeholder: "ラベル（カンマ区切り、省略可）",
+      class: styles.フォーム担当者,
+    }).setAttribute("list", ラベル候補リストID);
     this._作成者 = textInput({
       placeholder: "作成者",
       value: 作成者名を読み込む(),
@@ -73,6 +81,8 @@ export class 新規作成フォーム
       this._本文,
       this._担当者,
       this._担当者候補,
+      this._ラベル,
+      this._ラベル候補,
       this._作成者,
     );
   }
@@ -86,10 +96,15 @@ export class 新規作成フォーム
     this._タイトル.setValue("");
     this._本文.setValue("");
     this._担当者.setValue("");
+    this._ラベル.setValue("");
   }
 
   担当者候補を更新する(候補一覧: readonly string[]): void {
     this._担当者候補.候補を設定する(候補一覧);
+  }
+
+  ラベル候補を更新する(候補一覧: readonly string[]): void {
+    this._ラベル候補.候補を設定する(候補一覧);
   }
 
   private _ルートを構築する(
@@ -98,6 +113,8 @@ export class 新規作成フォーム
     本文: TextAreaC,
     担当者: TextInputC,
     担当者候補: 候補リストC,
+    ラベル: TextInputC,
+    ラベル候補: 候補リストC,
     作成者: TextInputC,
   ): DivC {
     return (
@@ -107,6 +124,8 @@ export class 新規作成フォーム
               タイトル,
               担当者,
               担当者候補,
+              ラベル,
+              ラベル候補,
               作成者,
               button({ text: "札を作成", class: styles.フォームボタン }).onClick(() =>
                 this._作成を発火する(),
@@ -128,6 +147,7 @@ export class 新規作成フォーム
       本文: this._本文.getValue(),
       担当者: 担当者.length === 0 ? undefined : 担当者,
       作成者,
+      ラベル一覧: ラベル文字列を配列にする(this._ラベル.getValue()),
     });
   }
 }

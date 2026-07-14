@@ -56,6 +56,7 @@ export interface 札作成入力 {
   readonly 本文: string;
   readonly 担当者: string | undefined;
   readonly 作成者: string;
+  readonly ラベル一覧: readonly string[] | undefined;
 }
 
 export interface 札更新入力 {
