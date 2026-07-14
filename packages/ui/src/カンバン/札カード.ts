@@ -1,5 +1,7 @@
 import { div, span, DivC, 配線ポート, type I配線可能 } from "sengen-ui";
 import type { 札DTO } from "../通信/札型";
+import { 現在ロケールを取得する } from "../文言/現在ロケール";
+import { カンバン内容を取得する } from "./カンバン内容";
 import { ラベルチップ } from "./ラベルチップ";
 import { 種別バッジ } from "./種別バッジ";
 import { 淀み表示状態 } from "./淀み表示状態";
@@ -9,8 +11,8 @@ export interface I札カード配線 {
   on選択(): void;
 }
 
-function 担当者表示(担当者: string | null): string {
-  return 担当者 === null ? "未割当" : 担当者;
+function 担当者表示(担当者: string | null, 未割当表示: string): string {
+  return 担当者 === null ? 未割当表示 : 担当者;
 }
 
 // カンバン列に並ぶ1枚の札（LV1拡張）。一覧更新のたびに作り直されるため、
@@ -21,6 +23,7 @@ export class 札カード extends DivC implements I配線可能<I札カード配
 
   constructor(札: 札DTO, 淀んでいるか: boolean) {
     super({ class: styles.カード });
+    const 文言 = カンバン内容を取得する(現在ロケールを取得する());
     this.setAttributeIf({
       If: 淀んでいるか,
       True: { attr: 淀み表示状態.attribute, value: 淀み表示状態.value.淀み },
@@ -30,10 +33,10 @@ export class 札カード extends DivC implements I配線可能<I札カード配
           new 種別バッジ(札.種別),
           span({ text: `#${札.id}`, class: styles.カードID })]),
       div({ text: 札.タイトル, class: styles.カードタイトル }),
-      div({ text: 担当者表示(札.担当者), class: styles.カード担当者 }),
+      div({ text: 担当者表示(札.担当者, 文言.カード未割当表示), class: styles.カード担当者 }),
       {
         If: 淀んでいるか,
-        True: () => span({ text: "presence不明", class: styles.淀みバッジ }),
+        True: () => span({ text: 文言.カード淀みバッジ, class: styles.淀みバッジ }),
       },
       {
         If: 札.ラベル一覧.length > 0,

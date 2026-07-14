@@ -10,6 +10,8 @@ import type { 稼働表明DTO } from "../通信/稼働型";
 import type { 稼働クライアント } from "../通信/稼働クライアント";
 import type { 札クライアント } from "../通信/札クライアント";
 import type { 札DTO, 札作成入力, 札更新入力 } from "../通信/札型";
+import { 現在ロケールを取得する } from "../文言/現在ロケール";
+import { モバイル札ビュー内容を取得する } from "./モバイル札ビュー内容";
 import { モバイル札ビュー部品 } from "./モバイル札ビュー部品";
 import { 札リストカード } from "./札リストカード";
 
@@ -20,6 +22,7 @@ export class モバイル札ビューサービス {
   private _最新一覧: readonly 札DTO[] = [];
   private _AI担当者名集合: ReadonlySet<string> = new Set();
   private _稼働状態マップ: ReadonlyMap<string, string> = new Map();
+  private readonly _文言 = モバイル札ビュー内容を取得する(現在ロケールを取得する());
 
   constructor(
     private readonly _クライアント: 札クライアント,
@@ -48,7 +51,7 @@ export class モバイル札ビューサービス {
       return 一覧;
     } catch (エラー) {
       this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : "札一覧の取得に失敗しました",
+        エラー instanceof Error ? エラー.message : this._文言.エラー札一覧取得失敗,
       );
       return undefined;
     }
@@ -85,7 +88,7 @@ export class モバイル札ビューサービス {
       await this.更新する();
     } catch (エラー) {
       this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : "札の作成に失敗しました",
+        エラー instanceof Error ? エラー.message : this._文言.エラー札作成失敗,
       );
     }
   }
@@ -100,7 +103,7 @@ export class モバイル札ビューサービス {
       }
     } catch (エラー) {
       this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : "札の更新に失敗しました",
+        エラー instanceof Error ? エラー.message : this._文言.エラー札更新失敗,
       );
     }
   }
@@ -108,7 +111,7 @@ export class モバイル札ビューサービス {
   async 添付を追加する(id: number, ファイル: File): Promise<void> {
     if (ファイル.size > 添付最大バイト数) {
       this._状態表示.エラーを表示する(
-        `添付ファイルは${添付最大バイト数 / (1024 * 1024)}MB以下である必要があります`,
+        this._文言.添付サイズ超過メッセージを作る(添付最大バイト数 / (1024 * 1024)),
       );
       return;
     }
@@ -122,7 +125,7 @@ export class モバイル札ビューサービス {
       }
     } catch (エラー) {
       this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : "添付の追加に失敗しました",
+        エラー instanceof Error ? エラー.message : this._文言.エラー添付追加失敗,
       );
     }
   }
@@ -137,7 +140,7 @@ export class モバイル札ビューサービス {
       }
     } catch (エラー) {
       this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : "添付の削除に失敗しました",
+        エラー instanceof Error ? エラー.message : this._文言.エラー添付削除失敗,
       );
     }
   }

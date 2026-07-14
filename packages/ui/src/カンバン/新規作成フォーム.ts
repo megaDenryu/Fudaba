@@ -14,8 +14,10 @@ import {
 } from "sengen-ui";
 import type { 札作成入力 } from "../通信/札型";
 import { 作成者名を読み込む, 作成者名を保存する } from "../作成者名記憶";
+import { 現在ロケールを取得する } from "../文言/現在ロケール";
 import { 候補リストC } from "./候補リストC";
 import { 札種別選択肢 } from "./定数";
+import { 新規作成フォーム内容を取得する } from "./新規作成フォーム内容";
 import { ラベル文字列を配列にする } from "./ラベル入力パース";
 import * as styles from "./style.css";
 
@@ -45,6 +47,7 @@ export class 新規作成フォーム
 
   constructor() {
     super();
+    const 文言 = 新規作成フォーム内容を取得する(現在ロケールを取得する());
     this._種別 = select({
       options: 札種別選択肢.map((種別, index) => ({
         value: 種別,
@@ -54,24 +57,24 @@ export class 新規作成フォーム
       class: styles.フォームセレクト,
     });
     this._タイトル = textInput({
-      placeholder: "タイトル",
+      placeholder: 文言.タイトルプレースホルダー,
       class: styles.フォーム入力,
     }).onEnterKey(() => this._作成を発火する());
     this._本文 = textarea({
-      placeholder: "本文（省略可）",
+      placeholder: 文言.本文プレースホルダー,
       rows: 2,
       class: styles.フォーム本文,
     });
     this._担当者 = textInput({
-      placeholder: "担当者（省略可）",
+      placeholder: 文言.担当者プレースホルダー,
       class: styles.フォーム担当者,
     }).setAttribute("list", 担当者候補リストID);
     this._ラベル = textInput({
-      placeholder: "ラベル（カンマ区切り、省略可）",
+      placeholder: 文言.ラベルプレースホルダー,
       class: styles.フォーム担当者,
     }).setAttribute("list", ラベル候補リストID);
     this._作成者 = textInput({
-      placeholder: "作成者",
+      placeholder: 文言.作成者プレースホルダー,
       value: 作成者名を読み込む(),
       class: styles.フォーム担当者,
     });
@@ -117,6 +120,7 @@ export class 新規作成フォーム
     ラベル候補: 候補リストC,
     作成者: TextInputC,
   ): DivC {
+    const 文言 = 新規作成フォーム内容を取得する(現在ロケールを取得する());
     return (
       div({ class: styles.新規フォーム }).childs([
           div({ class: styles.新規フォーム行 }).childs([
@@ -127,7 +131,7 @@ export class 新規作成フォーム
               ラベル,
               ラベル候補,
               作成者,
-              button({ text: "札を作成", class: styles.フォームボタン }).onClick(() =>
+              button({ text: 文言.作成ボタン, class: styles.フォームボタン }).onClick(() =>
                 this._作成を発火する(),
               )]),
           本文])

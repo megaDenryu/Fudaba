@@ -9,6 +9,8 @@ import {
   type I配線可能,
 } from "sengen-ui";
 import type { 添付DTO } from "../通信/札型";
+import { 現在ロケールを取得する } from "../文言/現在ロケール";
+import { 添付一覧内容を取得する } from "./添付一覧内容";
 import { 添付サムネイル } from "./添付サムネイル";
 import * as styles from "./style.css";
 
@@ -42,6 +44,7 @@ export class 添付一覧 extends LV2HtmlComponentBase implements I配線可能<
   }
 
   更新する(添付一覧: readonly 添付DTO[]): void {
+    const 文言 = 添付一覧内容を取得する(現在ロケールを取得する());
     const サムネイル一覧 = 添付一覧.map((添付) =>
       new 添付サムネイル(添付).配線する({
         on原寸表示: () => this._配線.先.on原寸表示(添付.保存名),
@@ -51,18 +54,19 @@ export class 添付一覧 extends LV2HtmlComponentBase implements I配線可能<
     this._サムネイル領域.clearChildren().childIfs([
       {
         If: サムネイル一覧.length === 0,
-        True: () => span({ text: "添付なし", class: styles.添付なし表示 }),
+        True: () => span({ text: 文言.なし表示, class: styles.添付なし表示 }),
       },
       サムネイル一覧]);
   }
 
   private _ルートを構築する(サムネイル領域: DivC, ファイル選択: FileInputC): DivC {
+    const 文言 = 添付一覧内容を取得する(現在ロケールを取得する());
     return (
       div({ class: styles.添付エリア }).childs([
           div({ class: styles.添付見出し行 }).childs([
-              span({ text: "添付", class: styles.詳細ラベル }),
+              span({ text: 文言.ラベル, class: styles.詳細ラベル }),
               ファイル選択]),
-          span({ text: "本文欄にフォーカスしてCtrl+Vでも追加できます", class: styles.添付ヒント }),
+          span({ text: 文言.貼り付けヒント, class: styles.添付ヒント }),
           サムネイル領域])
     );
   }

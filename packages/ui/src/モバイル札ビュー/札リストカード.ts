@@ -3,14 +3,16 @@ import { ラベルチップ } from "../カンバン/ラベルチップ";
 import { 種別バッジ } from "../カンバン/種別バッジ";
 import { 淀み表示状態 } from "../カンバン/淀み表示状態";
 import type { 札DTO } from "../通信/札型";
+import { 現在ロケールを取得する } from "../文言/現在ロケール";
+import { モバイル札ビュー内容を取得する } from "./モバイル札ビュー内容";
 import * as styles from "./style.css";
 
 export interface I札リストカード配線 {
   on選択(): void;
 }
 
-function 担当者表示(担当者: string | null): string {
-  return 担当者 === null ? "未割当" : 担当者;
+function 担当者表示(担当者: string | null, 未割当表示: string): string {
+  return 担当者 === null ? 未割当表示 : 担当者;
 }
 
 // モバイル札ビューの縦1列リストに並ぶ1行（LV1拡張）。タップで詳細ボトムシートを開く。
@@ -20,6 +22,7 @@ export class 札リストカード extends DivC implements I配線可能<I札リ
 
   constructor(札: 札DTO, 淀んでいるか: boolean) {
     super({ class: styles.一覧カード });
+    const 文言 = モバイル札ビュー内容を取得する(現在ロケールを取得する());
     this.setAttributeIf({
       If: 淀んでいるか,
       True: { attr: 淀み表示状態.attribute, value: 淀み表示状態.value.淀み },
@@ -30,11 +33,11 @@ export class 札リストカード extends DivC implements I配線可能<I札リ
           span({ text: `#${札.id}`, class: styles.一覧カードID })]),
       div({ text: 札.タイトル, class: styles.一覧カードタイトル }),
       div({ class: styles.一覧カード下段 }).childs([
-          span({ text: `状態: ${札.状態}` }),
-          span({ text: 担当者表示(札.担当者) })]),
+          span({ text: 文言.カード状態接頭辞を作る(札.状態) }),
+          span({ text: 担当者表示(札.担当者, 文言.カード未割当表示) })]),
       {
         If: 淀んでいるか,
-        True: () => span({ text: "presence不明", class: styles.淀みバッジ }),
+        True: () => span({ text: 文言.カード淀みバッジ, class: styles.淀みバッジ }),
       },
       {
         If: 札.ラベル一覧.length > 0,

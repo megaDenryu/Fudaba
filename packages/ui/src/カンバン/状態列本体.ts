@@ -1,4 +1,6 @@
 import { span, DivC } from "sengen-ui";
+import { 現在ロケールを取得する } from "../文言/現在ロケール";
+import { カンバン内容を取得する } from "./カンバン内容";
 import type { 札カード } from "./札カード";
 import * as styles from "./style.css";
 
@@ -10,10 +12,11 @@ export class 状態列本体 extends DivC {
   }
 
   全件を差し替える(カード一覧: readonly 札カード[]): this {
+    const 文言 = カンバン内容を取得する(現在ロケールを取得する());
     this.clearChildren().childIfs([
       {
         If: カード一覧.length === 0,
-        True: () => span({ text: "札はありません", class: styles.列空表示 }),
+        True: () => span({ text: 文言.列空表示, class: styles.列空表示 }),
       },
       カード一覧]);
     return this;
