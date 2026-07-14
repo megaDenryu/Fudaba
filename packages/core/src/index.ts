@@ -1,0 +1,14 @@
+// Fudabaがホスト（ワークスペースサーバー）へ公開する唯一の窓口。
+// 3点セットのうち「サーバールート登録関数」と、その配線に必要な型・ストアを export する
+
+export { Fudabaルートを登録する } from "./api/札ルート.js";
+export { 札ストア } from "./infra/札ストア.js";
+export { 札, type 札DTO, type 札変更内容 } from "./domain/札.js";
+export { 札ID } from "./domain/札ID.js";
+export { 札種別, 札種別一覧, type 札種別値 } from "./domain/札種別.js";
+export { 札状態, 札状態一覧, type 札状態値 } from "./domain/札状態.js";
+export { メンバー名 } from "./domain/メンバー名.js";
+export { type 担当者, 未割当, 割当済み } from "./domain/担当者.js";
+export { type 札リンク, 未リンク, ルームにリンクする } from "./domain/札リンク.js";
+export { 検証エラー } from "./domain/検証エラー.js";
+export { 札未検出エラー } from "./domain/札未検出エラー.js";
