@@ -16,3 +16,13 @@ export const 詳細保存ボタン表示状態 = {
     非表示: "false",
   },
 } as const;
+
+// 保存完了ラベルの表示可否をdata-attributeで管理するための状態定数。保存成功直後だけ
+// 表示し、次の編集開始や別札への切り替えで隠す
+export const 詳細保存完了ラベル表示状態 = {
+  attribute: "data-visible",
+  value: {
+    表示: "true",
+    非表示: "false",
+  },
+} as const;

@@ -14,7 +14,7 @@ export class カンバンビューサービス {
     private readonly _状態表示: 状態表示ラベル,
   ) {}
 
-  async 更新する(): Promise<void> {
+  async 更新する(): Promise<readonly 札DTO[] | undefined> {
     try {
       const 一覧 = await this._クライアント.一覧を取得する();
       this._列へ振り分ける(一覧);
@@ -22,10 +22,12 @@ export class カンバンビューサービス {
       this._部品.新規作成フォーム.担当者候補を更新する(担当者候補);
       this._部品.詳細パネル.担当者候補を更新する(担当者候補);
       this._状態表示.クリアする();
+      return 一覧;
     } catch (エラー) {
       this._状態表示.エラーを表示する(
         エラー instanceof Error ? エラー.message : "札一覧の取得に失敗しました",
       );
+      return undefined;
     }
   }
 
@@ -41,11 +43,16 @@ export class カンバンビューサービス {
     }
   }
 
+  // 保存後もパネルは開いたままにする。閉じる操作は「閉じる」ボタン（on閉じる配線）
+  // だけの責務とし、ここでは保存後の最新値をパネルへ反映するだけに留める
   async 保存する(id: number, 変更: 札更新入力): Promise<void> {
     try {
       await this._クライアント.更新する(id, 変更);
-      this._部品.詳細パネル.閉じる();
-      await this.更新する();
+      const 一覧 = await this.更新する();
+      const 保存後の札 = 一覧?.find((札) => 札.id === id);
+      if (保存後の札 !== undefined) {
+        this._部品.詳細パネル.保存完了を反映する(保存後の札);
+      }
     } catch (エラー) {
       this._状態表示.エラーを表示する(
         エラー instanceof Error ? エラー.message : "札の更新に失敗しました",
