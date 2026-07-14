@@ -37,6 +37,30 @@
 
 配線はホスト側(Jimbo main.ts / AgentRoom UIシェル)のコンポジションルートが行う。Fudabaは配線先を知らない。
 
+## テーマ変数
+
+`packages/ui/src/テーマ.ts` の全色は `var(--fudaba-xxx, フォールバック値)` 形式。ホストが
+`:root` 等で以下のCSSカスタムプロパティを定義すると配色を上書きできる(未定義時は各フォールバック値)。
+
+| 変数名 | 用途 | フォールバック |
+|---|---|---|
+| `--fudaba-background` | 全体背景 | `#f4f1fb` |
+| `--fudaba-surface` | パネル表面 | `#ffffff` |
+| `--fudaba-border` | パネル境界線 | `rgba(146, 126, 196, 0.30)` |
+| `--fudaba-text-primary` | 主テキスト | `#3a3355` |
+| `--fudaba-text-secondary` | 副テキスト | `#5b5286` |
+| `--fudaba-text-muted` | 薄いテキスト | `#8078a4` |
+| `--fudaba-hover` | ホバー背景 | `rgba(138, 111, 208, 0.08)` |
+| `--fudaba-accent-strong` | 強調色(主要ボタン等) | `#5b4a96` |
+| `--fudaba-accent` | アクセント色(フォーカス枠等) | `#8a6fd0` |
+| `--fudaba-danger-text` | 警告文字 | `#c9403a` |
+| `--fudaba-danger-border` | 警告境界線 | `#c9403a` |
+| `--fudaba-danger-bg` | 警告背景 | `rgba(201, 64, 58, 0.10)` |
+| `--fudaba-kind-task` | 種別バッジ: タスク | `#5b4a96` |
+| `--fudaba-kind-bug` | 種別バッジ: バグ | `#c9403a` |
+| `--fudaba-kind-decision` | 種別バッジ: 決定 | `#2f7d5a` |
+| `--fudaba-kind-note` | 種別バッジ: メモ | `#8078a4` |
+
 ## dogfooding
 
 Phase B以降(エージェント稼働可視化・成果物共有・BoomYackビュー統合)のタスクは、完成したFudaba自身に札として登録して管理する。
