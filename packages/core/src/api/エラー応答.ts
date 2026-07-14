@@ -1,5 +1,6 @@
 import type { FastifyReply } from "fastify";
 import { 検証エラー } from "../domain/検証エラー.js";
+import { 添付未検出エラー } from "../domain/添付未検出エラー.js";
 import { 札未検出エラー } from "../domain/札未検出エラー.js";
 
 // Fudabaはホストのapp.setErrorHandlerを間借りするだけで上書きしてはならない
@@ -14,6 +15,9 @@ export async function 検証エラーを応答に写像する(
     return await 処理();
   } catch (エラー) {
     if (エラー instanceof 札未検出エラー) {
+      return reply.code(404).send({ エラー: エラー.message });
+    }
+    if (エラー instanceof 添付未検出エラー) {
       return reply.code(404).send({ エラー: エラー.message });
     }
     if (エラー instanceof 検証エラー) {

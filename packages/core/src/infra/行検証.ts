@@ -11,6 +11,7 @@ export interface 札行 {
   readonly creator: string;
   readonly room_link: string | null;
   readonly labels: string;
+  readonly attachments: string;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -37,6 +38,8 @@ export function 札行に絞る(行: unknown): 札行 {
     (行.room_link === null || typeof 行.room_link === "string") &&
     "labels" in 行 &&
     typeof 行.labels === "string" &&
+    "attachments" in 行 &&
+    typeof 行.attachments === "string" &&
     "created_at" in 行 &&
     typeof 行.created_at === "string" &&
     "updated_at" in 行 &&
@@ -52,6 +55,7 @@ export function 札行に絞る(行: unknown): 札行 {
       creator: 行.creator,
       room_link: 行.room_link,
       labels: 行.labels,
+      attachments: 行.attachments,
       created_at: 行.created_at,
       updated_at: 行.updated_at,
     };

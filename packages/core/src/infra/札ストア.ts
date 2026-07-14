@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import type { 添付 } from "../domain/添付.js";
 import type { メンバー名 } from "../domain/メンバー名.js";
 import type { 札, 札変更内容 } from "../domain/札.js";
 import type { 札ID } from "../domain/札ID.js";
@@ -62,6 +63,14 @@ export class 札ストア {
 
   更新する(id: 札ID, 変更: 札変更内容): 札 | null {
     return this.札.更新する(id, 変更);
+  }
+
+  添付を追加する(id: 札ID, 対象: 添付): 札 | null {
+    return this.札.添付を追加する(id, 対象);
+  }
+
+  添付を除外する(id: 札ID, 保存名: string): 札 | null {
+    return this.札.添付を除外する(id, 保存名);
   }
 
   閉じる(): void {

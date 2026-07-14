@@ -1,6 +1,13 @@
 // サーバー（@fudaba/core）のAPIレスポンスは外部境界なのでunknownで受けてここで絞る。
 // APIの正本は packages/core/src/api/札ルート.ts
 
+export interface 添付DTO {
+  readonly 保存名: string;
+  readonly ファイル名: string;
+  readonly バイト数: number;
+  readonly 追加時刻: string;
+}
+
 export interface 札DTO {
   readonly id: number;
   readonly 種別: string;
@@ -11,12 +18,32 @@ export interface 札DTO {
   readonly 作成者: string;
   readonly ルーム名: string | null;
   readonly ラベル一覧: readonly string[];
+  readonly 添付一覧: readonly 添付DTO[];
   readonly 作成時刻: string;
   readonly 更新時刻: string;
 }
 
 function 文字列配列か(値: unknown): 値 is string[] {
   return Array.isArray(値) && 値.every((項目) => typeof 項目 === "string");
+}
+
+function 添付DTOか(値: unknown): 値 is 添付DTO {
+  return (
+    typeof 値 === "object" &&
+    値 !== null &&
+    "保存名" in 値 &&
+    typeof 値.保存名 === "string" &&
+    "ファイル名" in 値 &&
+    typeof 値.ファイル名 === "string" &&
+    "バイト数" in 値 &&
+    typeof 値.バイト数 === "number" &&
+    "追加時刻" in 値 &&
+    typeof 値.追加時刻 === "string"
+  );
+}
+
+function 添付DTO配列か(値: unknown): 値 is 添付DTO[] {
+  return Array.isArray(値) && 値.every((項目) => 添付DTOか(項目));
 }
 
 export function 札DTOか(値: unknown): 値 is 札DTO {
@@ -41,6 +68,8 @@ export function 札DTOか(値: unknown): 値 is 札DTO {
     (値.ルーム名 === null || typeof 値.ルーム名 === "string") &&
     "ラベル一覧" in 値 &&
     文字列配列か(値.ラベル一覧) &&
+    "添付一覧" in 値 &&
+    添付DTO配列か(値.添付一覧) &&
     "更新時刻" in 値 &&
     typeof 値.更新時刻 === "string"
   );

@@ -1,6 +1,7 @@
 import { 状態表示ラベル } from "../カンバン/状態表示ラベル";
 import { 担当者候補一覧を抽出する } from "../カンバン/担当者候補抽出";
-import { 札状態選択肢 } from "../カンバン/定数";
+import { ファイルをデータURLに変換する } from "../カンバン/添付データURL変換";
+import { 札状態選択肢, 添付最大バイト数 } from "../カンバン/定数";
 import { ラベル候補一覧を抽出する } from "../カンバン/ラベル候補抽出";
 import type { 札クライアント } from "../通信/札クライアント";
 import type { 札DTO, 札作成入力, 札更新入力 } from "../通信/札型";
@@ -74,6 +75,43 @@ export class モバイル札ビューサービス {
     } catch (エラー) {
       this._状態表示.エラーを表示する(
         エラー instanceof Error ? エラー.message : "札の更新に失敗しました",
+      );
+    }
+  }
+
+  async 添付を追加する(id: number, ファイル: File): Promise<void> {
+    if (ファイル.size > 添付最大バイト数) {
+      this._状態表示.エラーを表示する(
+        `添付ファイルは${添付最大バイト数 / (1024 * 1024)}MB以下である必要があります`,
+      );
+      return;
+    }
+    try {
+      const データURL = await ファイルをデータURLに変換する(ファイル);
+      await this._クライアント.添付を追加する(id, { ファイル名: ファイル.name, データURL });
+      const 一覧 = await this.更新する();
+      const 対象 = 一覧?.find((札) => 札.id === id);
+      if (対象 !== undefined) {
+        this._部品.詳細シート.添付一覧を反映する(対象);
+      }
+    } catch (エラー) {
+      this._状態表示.エラーを表示する(
+        エラー instanceof Error ? エラー.message : "添付の追加に失敗しました",
+      );
+    }
+  }
+
+  async 添付を削除する(id: number, 保存名: string): Promise<void> {
+    try {
+      await this._クライアント.添付を削除する(id, 保存名);
+      const 一覧 = await this.更新する();
+      const 対象 = 一覧?.find((札) => 札.id === id);
+      if (対象 !== undefined) {
+        this._部品.詳細シート.添付一覧を反映する(対象);
+      }
+    } catch (エラー) {
+      this._状態表示.エラーを表示する(
+        エラー instanceof Error ? エラー.message : "添付の削除に失敗しました",
       );
     }
   }

@@ -26,3 +26,12 @@ export const 詳細保存完了ラベル表示状態 = {
     非表示: "false",
   },
 } as const;
+
+// 添付プレビューオーバーレイの開閉をdata-attributeで管理するための状態定数
+export const 添付プレビュー開閉状態 = {
+  attribute: "data-open",
+  value: {
+    開: "true",
+    閉: "false",
+  },
+} as const;

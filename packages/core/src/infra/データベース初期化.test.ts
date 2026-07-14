@@ -45,11 +45,17 @@ describe("データベースを初期化する", () => {
         typeof 列 === "object" && 列 !== null && "name" in 列 && 列.name === "labels",
     );
     expect(labels列).toBeDefined();
+    const attachments列 = 列一覧.find(
+      (列): 列 is { name: string } =>
+        typeof 列 === "object" && 列 !== null && "name" in 列 && 列.name === "attachments",
+    );
+    expect(attachments列).toBeDefined();
 
     const リポジトリ = new 札リポジトリ(db);
     const 一覧 = リポジトリ.一覧を取得する();
     expect(一覧).toHaveLength(1);
     expect(一覧[0]?.ラベル一覧.値一覧).toEqual([]);
+    expect(一覧[0]?.添付一覧.一覧).toEqual([]);
   });
 
   it("マイグレーション後も新規追加でラベルを保存できる", () => {
@@ -72,5 +78,22 @@ describe("データベースを初期化する", () => {
     const db = 旧スキーマのdbを作る();
     データベースを初期化する(db);
     expect(() => データベースを初期化する(db)).not.toThrow();
+  });
+
+  it("labels列はあるがattachments列が無い中間スキーマにも列を追加できる（現行mainからの実移行経路）", () => {
+    const db = 旧スキーマのdbを作る();
+    db.exec(`ALTER TABLE fudaba_items ADD COLUMN labels TEXT NOT NULL DEFAULT '[]'`);
+    db.prepare(
+      `INSERT INTO fudaba_items (kind, title, body, status, assignee, creator, room_link, labels, created_at, updated_at)
+       VALUES ('タスク', '中間データ', '本文', '未着手', NULL, 'claude', NULL, '["jimbo"]', '2026-07-14T00:00:00.000Z', '2026-07-14T00:00:00.000Z')`,
+    ).run();
+
+    expect(() => データベースを初期化する(db)).not.toThrow();
+
+    const リポジトリ = new 札リポジトリ(db);
+    const 一覧 = リポジトリ.一覧を取得する();
+    expect(一覧).toHaveLength(1);
+    expect(一覧[0]?.ラベル一覧.値一覧).toEqual(["jimbo"]);
+    expect(一覧[0]?.添付一覧.一覧).toEqual([]);
   });
 });

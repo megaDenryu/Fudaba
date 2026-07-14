@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { 添付 } from "../domain/添付.js";
+import { 添付保存名 } from "../domain/添付保存名.js";
 import { メンバー名 } from "../domain/メンバー名.js";
 import { 札ID } from "../domain/札ID.js";
 import { 札種別 } from "../domain/札種別.js";
@@ -7,6 +9,15 @@ import { 札ラベル一覧 } from "../domain/札ラベル一覧.js";
 import { 割当済み, 未割当 } from "../domain/担当者.js";
 import { 未リンク, ルームにリンクする } from "../domain/札リンク.js";
 import { 札ストア } from "./札ストア.js";
+
+function 添付を作る(保存名文字列: string): 添付 {
+  return 添付.create({
+    保存名: 添付保存名.create(保存名文字列),
+    ファイル名: "screenshot.png",
+    バイト数: 1024,
+    追加時刻ISO: "2026-07-14T00:00:00.000Z",
+  });
+}
 
 function 追加する(
   ストア: 札ストア,
@@ -165,6 +176,54 @@ describe("札ストア", () => {
       追加する(ストア, { ラベル一覧: ["a"] });
       追加する(ストア, { ラベル一覧: [] });
       expect(ストア.一覧を取得する()).toHaveLength(2);
+    });
+  });
+
+  describe("添付", () => {
+    it("追加した札は添付一覧が空", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      const 追加済み = 追加する(ストア);
+      expect(追加済み.添付一覧.一覧).toEqual([]);
+    });
+
+    it("添付を追加すると再取得後も反映される", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      const 追加済み = 追加する(ストア);
+      const 対象 = 添付を作る("a".repeat(32) + ".png");
+      const 更新後 = ストア.添付を追加する(追加済み.id, 対象);
+      expect(更新後?.添付一覧.一覧).toHaveLength(1);
+      const 再取得 = ストア.IDで取得する(追加済み.id);
+      expect(再取得?.添付一覧.一覧).toHaveLength(1);
+      expect(再取得?.添付一覧.含むか("a".repeat(32) + ".png")).toBe(true);
+    });
+
+    it("添付を除外すると一覧から消える", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      const 追加済み = 追加する(ストア);
+      const 保存名 = "a".repeat(32) + ".png";
+      ストア.添付を追加する(追加済み.id, 添付を作る(保存名));
+      const 更新後 = ストア.添付を除外する(追加済み.id, 保存名);
+      expect(更新後?.添付一覧.一覧).toEqual([]);
+    });
+
+    it("存在しない札への添付追加はnullを返す", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      const 結果 = ストア.添付を追加する(札ID.create(9999), 添付を作る("a".repeat(32) + ".png"));
+      expect(結果).toBeNull();
+    });
+
+    it("存在しない保存名の除外は例外を投げる", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      const 追加済み = 追加する(ストア);
+      expect(() => ストア.添付を除外する(追加済み.id, "b".repeat(32) + ".png")).toThrow();
+    });
+
+    it("添付追加はラベル等の他フィールドを変更しない", () => {
+      const ストア = 札ストア.メモリ上に作る();
+      const 追加済み = 追加する(ストア, { タイトル: "元タイトル", ラベル一覧: ["fudaba"] });
+      const 更新後 = ストア.添付を追加する(追加済み.id, 添付を作る("a".repeat(32) + ".png"));
+      expect(更新後?.タイトル).toBe("元タイトル");
+      expect(更新後?.ラベル一覧.値一覧).toEqual(["fudaba"]);
     });
   });
 });

@@ -5,7 +5,9 @@ import { 札種別 } from "../domain/札種別.js";
 import { 割当済み, 未割当 } from "../domain/担当者.js";
 import { 未リンク, ルームにリンクする } from "../domain/札リンク.js";
 import { 札未検出エラー } from "../domain/札未検出エラー.js";
+import type { 添付ストレージ } from "../infra/添付ストレージ.js";
 import type { 札ストア } from "../infra/札ストア.js";
+import { Fudaba添付ルートを登録する } from "./添付ルート.js";
 import { 検証エラーを応答に写像する } from "./エラー応答.js";
 import {
   作成内容に絞る,
@@ -20,7 +22,7 @@ import type { 札パス } from "./ルートパス型.js";
 // （参照: DESIGN.md「提供する3点セット」、Jimbo/ARCHITECTURE.md「住民の実装形態」）
 export function Fudabaルートを登録する(
   app: FastifyInstance,
-  依存: { ストア: 札ストア },
+  依存: { ストア: 札ストア; 添付ストレージ: 添付ストレージ },
 ): void {
   const { ストア } = 依存;
 
@@ -58,4 +60,6 @@ export function Fudabaルートを登録する(
       return 更新後.toJSON();
     }),
   );
+
+  Fudaba添付ルートを登録する(app, 依存);
 }

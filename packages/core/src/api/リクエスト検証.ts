@@ -1,3 +1,4 @@
+import { 添付拡張子 } from "../domain/添付拡張子.js";
 import { 検証エラー } from "../domain/検証エラー.js";
 import { 札種別 } from "../domain/札種別.js";
 import { 札状態 } from "../domain/札状態.js";
@@ -115,6 +116,45 @@ export function IDパラメータを読む(値: string): number {
     throw new 検証エラー(`札IDは正の整数である必要があります: "${値}"`);
   }
   return 数値;
+}
+
+const データURLパターン = /^data:([^;]+);base64,(.+)$/s;
+
+export interface 添付追加内容 {
+  readonly ファイル名: string;
+  readonly バイナリ: Buffer;
+  readonly 拡張子: 添付拡張子;
+}
+
+// POST /api/fudaba/items/:id/attachments のボディを絞る。データURL（"data:<MIME型>;base64,<データ>"）
+// はFileReader.readAsDataURL()がブラウザ側でそのまま生成できる形式で、クライアント実装を薄くする
+export function 添付追加内容に絞る(ボディ: unknown): 添付追加内容 {
+  if (
+    typeof ボディ !== "object" ||
+    ボディ === null ||
+    !("ファイル名" in ボディ) ||
+    typeof ボディ.ファイル名 !== "string" ||
+    !("データURL" in ボディ) ||
+    typeof ボディ.データURL !== "string"
+  ) {
+    throw new 検証エラー(
+      'ボディは { "ファイル名": string, "データURL": string } である必要があります',
+    );
+  }
+  const 一致 = データURLパターン.exec(ボディ.データURL);
+  if (一致 === null) {
+    throw new 検証エラー(
+      '"データURL" は data:<MIME型>;base64,<データ> 形式である必要があります',
+    );
+  }
+  const [, mime, base64データ] = 一致;
+  if (mime === undefined || base64データ === undefined) {
+    throw new 検証エラー(
+      '"データURL" は data:<MIME型>;base64,<データ> 形式である必要があります',
+    );
+  }
+  const 拡張子 = 添付拡張子.MIME型から作る(mime);
+  return { ファイル名: ボディ.ファイル名, バイナリ: Buffer.from(base64データ, "base64"), 拡張子 };
 }
 
 // GET /api/fudaba/items?ラベル=jimbo&ラベル=urgent のように同名クエリパラメータの

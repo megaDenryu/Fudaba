@@ -26,6 +26,19 @@ function labels列を保証する(db: Database.Database): void {
   }
 }
 
+// 既存のfudaba.sqlite3（attachments列導入前）を読み込んだときの後方互換マイグレーション。
+// labels列を保証する()と同じ方針（PRAGMAで列の有無を確認してからALTER TABLE）
+function attachments列を保証する(db: Database.Database): void {
+  const 列一覧 = db
+    .prepare("PRAGMA table_info(fudaba_items)")
+    .all()
+    .map(列情報として絞る);
+  const attachments列が存在する = 列一覧.some((列) => 列.name === "attachments");
+  if (!attachments列が存在する) {
+    db.exec(`ALTER TABLE fudaba_items ADD COLUMN attachments TEXT NOT NULL DEFAULT '[]'`);
+  }
+}
+
 // スキーマ作成を1箇所に集約する。AgentRoomのDBとは別ファイル（fudaba.sqlite3）に持つ
 // （参照: Jimbo/ARCHITECTURE.md「DBファイルは機能ごとに独立」）
 export function データベースを初期化する(db: Database.Database): void {
@@ -41,10 +54,12 @@ export function データベースを初期化する(db: Database.Database): voi
       creator TEXT NOT NULL,
       room_link TEXT,
       labels TEXT NOT NULL DEFAULT '[]',
+      attachments TEXT NOT NULL DEFAULT '[]',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_fudaba_items_updated_at ON fudaba_items(updated_at);
   `);
   labels列を保証する(db);
+  attachments列を保証する(db);
 }

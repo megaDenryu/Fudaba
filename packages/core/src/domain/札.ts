@@ -1,3 +1,4 @@
+import { type 添付, type 添付DTO } from "./添付.js";
 import { 検証エラー } from "./検証エラー.js";
 import { メンバー名 } from "./メンバー名.js";
 import { 札ID } from "./札ID.js";
@@ -6,6 +7,7 @@ import { 札状態 } from "./札状態.js";
 import { type 担当者, 担当者をDTO値にする } from "./担当者.js";
 import { type 札リンク, 札リンクをDTO値にする } from "./札リンク.js";
 import { 札ラベル一覧 } from "./札ラベル一覧.js";
+import { 札添付一覧 } from "./札添付一覧.js";
 
 const タイトル最大文字数 = 200;
 const 本文最大文字数 = 20_000;
@@ -33,6 +35,7 @@ export class 札 {
     readonly 作成者: メンバー名,
     readonly リンク: 札リンク,
     readonly ラベル一覧: 札ラベル一覧,
+    readonly 添付一覧: 札添付一覧,
     readonly 作成時刻ISO: string,
     readonly 更新時刻ISO: string,
   ) {}
@@ -47,6 +50,7 @@ export class 札 {
     作成者: メンバー名;
     リンク: 札リンク;
     ラベル一覧: 札ラベル一覧;
+    添付一覧: 札添付一覧;
     作成時刻ISO: string;
     更新時刻ISO: string;
   }): 札 {
@@ -69,12 +73,14 @@ export class 札 {
       引数.作成者,
       引数.リンク,
       引数.ラベル一覧,
+      引数.添付一覧,
       引数.作成時刻ISO,
       引数.更新時刻ISO,
     );
   }
 
-  // 部分更新を適用した新しい札を返す（不変性優先。既存インスタンスは変更しない）
+  // 部分更新を適用した新しい札を返す（不変性優先。既存インスタンスは変更しない）。
+  // 添付一覧は札変更内容の対象外（専用エンドポイント経由でのみ変更される）なので常に維持する
   変更を適用する(変更: 札変更内容, 更新時刻ISO: string): 札 {
     return 札.create({
       id: this.id.値,
@@ -86,6 +92,43 @@ export class 札 {
       作成者: this.作成者,
       リンク: this.リンク,
       ラベル一覧: 変更.ラベル一覧 ?? this.ラベル一覧,
+      添付一覧: this.添付一覧,
+      作成時刻ISO: this.作成時刻ISO,
+      更新時刻ISO,
+    });
+  }
+
+  // 添付追加・削除は他のフィールドを一切変更しない専用操作として分離する（AgentRoomの
+  // 添付APIが札変更内容のPATCHと混ざると「部分更新の対象外フィールド」の扱いが曖昧になるため）
+  添付を追加する(対象: 添付, 更新時刻ISO: string): 札 {
+    return 札.create({
+      id: this.id.値,
+      種別: this.種別,
+      タイトル: this.タイトル,
+      本文: this.本文,
+      状態: this.状態,
+      担当者: this.担当者,
+      作成者: this.作成者,
+      リンク: this.リンク,
+      ラベル一覧: this.ラベル一覧,
+      添付一覧: this.添付一覧.追加する(対象),
+      作成時刻ISO: this.作成時刻ISO,
+      更新時刻ISO,
+    });
+  }
+
+  添付を除外する(保存名: string, 更新時刻ISO: string): 札 {
+    return 札.create({
+      id: this.id.値,
+      種別: this.種別,
+      タイトル: this.タイトル,
+      本文: this.本文,
+      状態: this.状態,
+      担当者: this.担当者,
+      作成者: this.作成者,
+      リンク: this.リンク,
+      ラベル一覧: this.ラベル一覧,
+      添付一覧: this.添付一覧.除外する(保存名),
       作成時刻ISO: this.作成時刻ISO,
       更新時刻ISO,
     });
@@ -102,6 +145,7 @@ export class 札 {
       作成者: this.作成者.値,
       ルーム名: 札リンクをDTO値にする(this.リンク),
       ラベル一覧: this.ラベル一覧.値一覧,
+      添付一覧: this.添付一覧.一覧.map((添付) => 添付.toJSON()),
       作成時刻: this.作成時刻ISO,
       更新時刻: this.更新時刻ISO,
     };
@@ -118,6 +162,7 @@ export interface 札DTO {
   readonly 作成者: string;
   readonly ルーム名: string | null;
   readonly ラベル一覧: readonly string[];
+  readonly 添付一覧: readonly 添付DTO[];
   readonly 作成時刻: string;
   readonly 更新時刻: string;
 }

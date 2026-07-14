@@ -3,6 +3,7 @@ import { 狭幅メディアクエリ } from "../レスポンシブ";
 import { Fudabaテーマ配色, Fudaba警告色 } from "../テーマ";
 import { フィルタチップ選択状態 } from "./フィルタチップ選択状態";
 import {
+  添付プレビュー開閉状態,
   詳細パネル開閉状態,
   詳細保存ボタン表示状態,
   詳細保存完了ラベル表示状態,
@@ -380,3 +381,117 @@ globalStyle(
   `${詳細保存ボタン}[${詳細保存ボタン表示状態.attribute}="${詳細保存ボタン表示状態.value.非表示}"]`,
   { display: "none" },
 );
+
+// --- 添付 ---
+
+export const 添付エリア = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: "6px",
+});
+
+export const 添付見出し行 = style({
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  flexWrap: "wrap",
+});
+
+export const 添付ヒント = style({
+  fontSize: "10px",
+  color: Fudabaテーマ配色.テキスト薄,
+});
+
+export const 添付ファイル選択 = style({ fontSize: "11px", maxWidth: "180px" });
+
+export const 添付サムネイル領域 = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "6px",
+});
+
+export const 添付なし表示 = style({
+  fontSize: "11px",
+  color: Fudabaテーマ配色.テキスト薄,
+});
+
+export const 添付サムネイル = style({
+  position: "relative",
+  width: "64px",
+  height: "64px",
+  flexShrink: 0,
+});
+
+export const 添付サムネイル画像 = style({
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  borderRadius: "4px",
+  border: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
+  cursor: "pointer",
+});
+
+export const 添付削除ボタン = style({
+  position: "absolute",
+  top: "-6px",
+  right: "-6px",
+  width: "18px",
+  height: "18px",
+  lineHeight: "16px",
+  padding: 0,
+  borderRadius: "50%",
+  border: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
+  backgroundColor: Fudabaテーマ配色.パネル表面,
+  color: Fudaba警告色.文字,
+  fontSize: "11px",
+  cursor: "pointer",
+});
+
+export const 添付プレビュー背景 = style({
+  position: "fixed",
+  inset: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 1000,
+});
+
+globalStyle(
+  `${添付プレビュー背景}[${添付プレビュー開閉状態.attribute}="${添付プレビュー開閉状態.value.閉}"]`,
+  { display: "none" },
+);
+
+export const 添付プレビュー本体 = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+  maxWidth: "90vw",
+  maxHeight: "90vh",
+});
+
+export const 添付プレビュー画像領域 = style({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minWidth: 0,
+  minHeight: 0,
+});
+
+export const 添付プレビュー画像 = style({
+  maxWidth: "90vw",
+  maxHeight: "80vh",
+  objectFit: "contain",
+  borderRadius: "4px",
+});
+
+export const 添付プレビュー閉じるボタン = style({
+  alignSelf: "flex-end",
+  border: "none",
+  borderRadius: "4px",
+  backgroundColor: Fudabaテーマ配色.パネル表面,
+  color: Fudabaテーマ配色.テキスト主,
+  padding: "6px 14px",
+  fontSize: "12px",
+  cursor: "pointer",
+});
