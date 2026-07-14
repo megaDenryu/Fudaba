@@ -38,6 +38,7 @@ describe("札ストア", () => {
       const 二件目 = 追加する(ストア, { タイトル: "後" });
       vi.setSystemTime(new Date("2026-07-14T00:00:02.000Z"));
       ストア.更新する(一件目.id, {
+        種別: undefined,
         タイトル: "先(更新)",
         本文: undefined,
         状態: undefined,
@@ -57,6 +58,7 @@ describe("札ストア", () => {
     const ストア = 札ストア.メモリ上に作る();
     const 追加済み = 追加する(ストア);
     const 更新後 = ストア.更新する(追加済み.id, {
+      種別: undefined,
       タイトル: undefined,
       本文: undefined,
       状態: 札状態.create("進行中"),
@@ -65,6 +67,21 @@ describe("札ストア", () => {
     expect(更新後?.状態.値).toBe("進行中");
     expect(更新後?.担当者).toEqual(割当済み(メンバー名.create("codex")));
     expect(更新後?.タイトル).toBe("サンプル札");
+  });
+
+  it("更新するは種別も変更でき、再取得後も反映が保持される", () => {
+    const ストア = 札ストア.メモリ上に作る();
+    const 追加済み = 追加する(ストア);
+    expect(追加済み.種別.値).toBe("バグ");
+    ストア.更新する(追加済み.id, {
+      種別: 札種別.create("決定"),
+      タイトル: undefined,
+      本文: undefined,
+      状態: undefined,
+      担当者: undefined,
+    });
+    const 再取得 = ストア.IDで取得する(追加済み.id);
+    expect(再取得?.種別.値).toBe("決定");
   });
 
   it("担当者へ未割当を明示指定すると解除される", () => {
@@ -78,6 +95,7 @@ describe("札ストア", () => {
       リンク: ルームにリンクする("dev"),
     });
     const 更新後 = ストア.更新する(追加済み.id, {
+      種別: undefined,
       タイトル: undefined,
       本文: undefined,
       状態: undefined,
@@ -89,6 +107,7 @@ describe("札ストア", () => {
   it("存在しないIDの更新はnullを返す", () => {
     const ストア = 札ストア.メモリ上に作る();
     const 結果 = ストア.更新する(札ID.create(9999), {
+      種別: undefined,
       タイトル: undefined,
       本文: undefined,
       状態: undefined,

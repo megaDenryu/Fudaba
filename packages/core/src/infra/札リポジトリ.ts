@@ -92,10 +92,11 @@ export class 札リポジトリ {
     this.db
       .prepare(
         `UPDATE fudaba_items
-         SET title = ?, body = ?, status = ?, assignee = ?, updated_at = ?
+         SET kind = ?, title = ?, body = ?, status = ?, assignee = ?, updated_at = ?
          WHERE id = ?`,
       )
       .run(
+        更新後.種別.値,
         更新後.タイトル,
         更新後.本文,
         更新後.状態.値,

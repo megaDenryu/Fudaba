@@ -89,6 +89,41 @@ describe("Fudabaルート", () => {
     expect(更新応答.json()).toMatchObject({ 担当者: null });
   });
 
+  it("PATCHで種別を変更できる", async () => {
+    const app = アプリを作る(ストア);
+    const 作成応答 = await app.inject({
+      method: "POST",
+      url: "/api/fudaba/items",
+      payload: { 種別: "タスク", タイトル: "テスト札", 本文: "本文", 作成者: "claude" },
+    });
+    const id = idを読む(作成応答.json());
+
+    const 更新応答 = await app.inject({
+      method: "PATCH",
+      url: `/api/fudaba/items/${id}`,
+      payload: { 種別: "バグ" },
+    });
+    expect(更新応答.statusCode).toBe(200);
+    expect(更新応答.json()).toMatchObject({ 種別: "バグ" });
+  });
+
+  it("種別が不正なPATCHは400を返す", async () => {
+    const app = アプリを作る(ストア);
+    const 作成応答 = await app.inject({
+      method: "POST",
+      url: "/api/fudaba/items",
+      payload: { 種別: "タスク", タイトル: "テスト札", 本文: "本文", 作成者: "claude" },
+    });
+    const id = idを読む(作成応答.json());
+
+    const 更新応答 = await app.inject({
+      method: "PATCH",
+      url: `/api/fudaba/items/${id}`,
+      payload: { 種別: "不明種別" },
+    });
+    expect(更新応答.statusCode).toBe(400);
+  });
+
   it("存在しないIDのPATCHは404を返す", async () => {
     const app = アプリを作る(ストア);
     const 応答 = await app.inject({

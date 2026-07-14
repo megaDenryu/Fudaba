@@ -83,19 +83,22 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
 
   server.tool(
     "fudaba_update",
-    "Fudabaの既存の札を部分更新する。タイトル・本文・状態・担当者のうち渡したフィールドだけが" +
-      "変更される。状態遷移に制約は無い（どの状態からどの状態へも変更可）。" +
+    "Fudabaの既存の札を部分更新する。種別・タイトル・本文・状態・担当者のうち渡したフィールドだけが" +
+      "変更される。状態遷移に制約は無い（どの状態からどの状態へも変更可）。種別も後から変更できる" +
+      "（例: メモとして書いたら実はバグだった、等）。" +
       "担当者を解除するには担当者解除=true を渡す（担当者と同時指定はできない）。",
     {
       id: z.number().int().positive().describe("更新する札のID"),
+      種別: z.enum(札種別一覧).optional().describe(`札の種別（${札種別一覧.join(" | ")}）`),
       タイトル: z.string().min(1).optional(),
       本文: z.string().optional(),
       状態: z.enum(札状態一覧).optional().describe(`札の状態（${札状態一覧.join(" | ")}）`),
       担当者: z.string().optional().describe("新しい担当者名"),
       担当者解除: z.boolean().optional().default(false).describe("trueで担当者を未割当に戻す"),
     },
-    async ({ id, タイトル, 本文, 状態, 担当者, 担当者解除 }) => {
+    async ({ id, 種別, タイトル, 本文, 状態, 担当者, 担当者解除 }) => {
       const 応答 = await 札を更新する(fudabaBaseUrl, id, {
+        ...(種別 !== undefined ? { 種別 } : {}),
         ...(タイトル !== undefined ? { タイトル } : {}),
         ...(本文 !== undefined ? { 本文 } : {}),
         ...(状態 !== undefined ? { 状態 } : {}),

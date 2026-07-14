@@ -1,4 +1,5 @@
 import { 検証エラー } from "../domain/検証エラー.js";
+import { 札種別 } from "../domain/札種別.js";
 import { 札状態 } from "../domain/札状態.js";
 import { type 担当者, 割当済み, 未割当 } from "../domain/担当者.js";
 import { メンバー名 } from "../domain/メンバー名.js";
@@ -60,6 +61,13 @@ export function 変更内容に絞る(ボディ: unknown): 札変更内容 {
   if (typeof ボディ !== "object" || ボディ === null) {
     throw new 検証エラー("ボディはオブジェクトである必要があります");
   }
+  let 種別: 札種別 | undefined;
+  if ("種別" in ボディ) {
+    if (typeof ボディ.種別 !== "string") {
+      throw new 検証エラー('"種別" はstringである必要があります');
+    }
+    種別 = 札種別.create(ボディ.種別);
+  }
   const タイトル =
     "タイトル" in ボディ && typeof ボディ.タイトル === "string" ? ボディ.タイトル : undefined;
   if ("タイトル" in ボディ && typeof ボディ.タイトル !== "string") {
@@ -77,7 +85,7 @@ export function 変更内容に絞る(ボディ: unknown): 札変更内容 {
     状態 = 札状態.create(ボディ.状態);
   }
   const 担当者 = 担当者変更を読む(ボディ);
-  return { タイトル, 本文, 状態, 担当者 };
+  return { 種別, タイトル, 本文, 状態, 担当者 };
 }
 
 export function IDパラメータを読む(値: string): number {

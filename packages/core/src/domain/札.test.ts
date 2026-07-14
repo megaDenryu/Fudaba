@@ -57,7 +57,13 @@ describe("札", () => {
     it("指定したフィールドだけを更新し、他は維持する", () => {
       const 元札 = 札を作る();
       const 更新後 = 元札.変更を適用する(
-        { タイトル: undefined, 本文: undefined, 状態: 札状態.create("進行中"), 担当者: undefined },
+        {
+          種別: undefined,
+          タイトル: undefined,
+          本文: undefined,
+          状態: 札状態.create("進行中"),
+          担当者: undefined,
+        },
         "2026-07-15T00:00:00.000Z",
       );
       expect(更新後.状態.値).toBe("進行中");
@@ -69,10 +75,25 @@ describe("札", () => {
     it("担当者へ未割当を明示指定すると解除される", () => {
       const 元札 = 札を作る({ 担当者: 割当済み(メンバー名.create("codex")) });
       const 更新後 = 元札.変更を適用する(
-        { タイトル: undefined, 本文: undefined, 状態: undefined, 担当者: 未割当 },
+        { 種別: undefined, タイトル: undefined, 本文: undefined, 状態: undefined, 担当者: 未割当 },
         "2026-07-15T00:00:00.000Z",
       );
       expect(更新後.担当者).toEqual(未割当);
+    });
+
+    it("種別を指定すると更新される", () => {
+      const 元札 = 札を作る({ 種別: 札種別.create("タスク") });
+      const 更新後 = 元札.変更を適用する(
+        {
+          種別: 札種別.create("バグ"),
+          タイトル: undefined,
+          本文: undefined,
+          状態: undefined,
+          担当者: undefined,
+        },
+        "2026-07-15T00:00:00.000Z",
+      );
+      expect(更新後.種別.値).toBe("バグ");
     });
   });
 });

@@ -12,6 +12,7 @@ const 本文最大文字数 = 20_000;
 // 部分更新の入力。キーが省略されたフィールドは「変更なし」を意味し、DBのCOALESCEに
 // 頼らずドメイン層で明示的に扱う（担当者は未割当への明示変更とキー省略を区別する必要があるため）
 export interface 札変更内容 {
+  readonly 種別: 札種別 | undefined;
   readonly タイトル: string | undefined;
   readonly 本文: string | undefined;
   readonly 状態: 札状態 | undefined;
@@ -72,7 +73,7 @@ export class 札 {
   変更を適用する(変更: 札変更内容, 更新時刻ISO: string): 札 {
     return 札.create({
       id: this.id.値,
-      種別: this.種別,
+      種別: 変更.種別 ?? this.種別,
       タイトル: 変更.タイトル ?? this.タイトル,
       本文: 変更.本文 ?? this.本文,
       状態: 変更.状態 ?? this.状態,
