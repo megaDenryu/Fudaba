@@ -1,0 +1,3 @@
+[submodule "submodules/SengenUI"]
+	path = submodules/SengenUI
+	url = git@github.com:megaDenryu/SengenUI.git

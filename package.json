@@ -1,0 +1,14 @@
+{
+  "name": "fudaba",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @fudaba/core",
+    "dev:ui": "npm run dev -w @fudaba/ui",
+    "build:ui": "npm run build -w @fudaba/ui",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
+}
