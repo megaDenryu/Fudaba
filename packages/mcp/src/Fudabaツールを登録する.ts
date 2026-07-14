@@ -75,13 +75,13 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
       "発見したバグは種別=バグ、依頼・自発タスクは種別=タスク、意思決定は種別=決定、" +
       "自由記録は種別=メモとして記録する。人間は同じ札をカンバンUIで見ている。",
     {
-      種別: z.enum(札種別一覧).describe(`札の種別（${札種別一覧.join(" | ")}）`),
-      タイトル: z.string().min(1).describe("札の見出し"),
-      本文: z.string().describe("札の詳細本文"),
-      作成者: z.string().min(1).describe("自分のエージェント名・人間名"),
-      担当者: z.string().optional().describe("担当者名（省略すると未割当）"),
-      ルームリンク: z.string().optional().describe("関連するAgentRoomのルーム名（弱参照、省略可）"),
-      ラベル一覧: z
+      kind: z.enum(札種別一覧).describe(`札の種別（${札種別一覧.join(" | ")}）`),
+      title: z.string().min(1).describe("札の見出し"),
+      body: z.string().describe("札の詳細本文"),
+      creator: z.string().min(1).describe("自分のエージェント名・人間名"),
+      assignee: z.string().optional().describe("担当者名（省略すると未割当）"),
+      roomLink: z.string().optional().describe("関連するAgentRoomのルーム名（弱参照、省略可）"),
+      labels: z
         .array(z.string())
         .optional()
         .describe(
@@ -89,15 +89,15 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
             "リポジトリ名等（jimbo/fudaba/boomyack/agentroom）はラベルの慣用として使う",
         ),
     },
-    async ({ 種別, タイトル, 本文, 作成者, 担当者, ルームリンク, ラベル一覧 }) => {
+    async ({ kind, title, body, creator, assignee, roomLink, labels }) => {
       const 応答 = await 札を作成する(fudabaBaseUrl, {
-        種別,
-        タイトル,
-        本文,
-        作成者,
-        ...(担当者 !== undefined ? { 担当者 } : {}),
-        ...(ルームリンク !== undefined ? { ルーム名: ルームリンク } : {}),
-        ...(ラベル一覧 !== undefined ? { ラベル一覧 } : {}),
+        種別: kind,
+        タイトル: title,
+        本文: body,
+        作成者: creator,
+        ...(assignee !== undefined ? { 担当者: assignee } : {}),
+        ...(roomLink !== undefined ? { ルーム名: roomLink } : {}),
+        ...(labels !== undefined ? { ラベル一覧: labels } : {}),
       });
       return { content: [{ type: "text", text: 応答を整形する(応答) }] };
     },
@@ -112,25 +112,25 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
       "ラベル一覧を渡すと既存のラベルは全て置き換わる（部分追加ではない）。",
     {
       id: z.number().int().positive().describe("更新する札のID"),
-      種別: z.enum(札種別一覧).optional().describe(`札の種別（${札種別一覧.join(" | ")}）`),
-      タイトル: z.string().min(1).optional(),
-      本文: z.string().optional(),
-      状態: z.enum(札状態一覧).optional().describe(`札の状態（${札状態一覧.join(" | ")}）`),
-      担当者: z.string().optional().describe("新しい担当者名"),
-      担当者解除: z.boolean().optional().default(false).describe("trueで担当者を未割当に戻す"),
-      ラベル一覧: z
+      kind: z.enum(札種別一覧).optional().describe(`札の種別（${札種別一覧.join(" | ")}）`),
+      title: z.string().min(1).optional(),
+      body: z.string().optional(),
+      status: z.enum(札状態一覧).optional().describe(`札の状態（${札状態一覧.join(" | ")}）`),
+      assignee: z.string().optional().describe("新しい担当者名"),
+      unassign: z.boolean().optional().default(false).describe("trueで担当者を未割当に戻す"),
+      labels: z
         .array(z.string())
         .optional()
         .describe("新しいラベル一覧（既存のラベルを全て置き換える）"),
     },
-    async ({ id, 種別, タイトル, 本文, 状態, 担当者, 担当者解除, ラベル一覧 }) => {
+    async ({ id, kind, title, body, status, assignee, unassign, labels }) => {
       const 応答 = await 札を更新する(fudabaBaseUrl, id, {
-        ...(種別 !== undefined ? { 種別 } : {}),
-        ...(タイトル !== undefined ? { タイトル } : {}),
-        ...(本文 !== undefined ? { 本文 } : {}),
-        ...(状態 !== undefined ? { 状態 } : {}),
-        ...(担当者解除 === true ? { 担当者: null } : 担当者 !== undefined ? { 担当者 } : {}),
-        ...(ラベル一覧 !== undefined ? { ラベル一覧 } : {}),
+        ...(kind !== undefined ? { 種別: kind } : {}),
+        ...(title !== undefined ? { タイトル: title } : {}),
+        ...(body !== undefined ? { 本文: body } : {}),
+        ...(status !== undefined ? { 状態: status } : {}),
+        ...(unassign === true ? { 担当者: null } : assignee !== undefined ? { 担当者: assignee } : {}),
+        ...(labels !== undefined ? { ラベル一覧: labels } : {}),
       });
       return { content: [{ type: "text", text: 応答を整形する(応答) }] };
     },
@@ -145,12 +145,12 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
       "バグ調査でスクリーンショットが貼られている札は添付一覧が空でないので、" +
       "調査前に確認するとよい（画像自体はfudaba_listでは取得できず、AI向けの取得手段は未実装）。",
     {
-      種別: z.enum(札種別一覧).optional(),
-      状態: z.enum(札状態一覧).optional(),
-      担当者: z.string().optional(),
-      ラベル一覧: z.array(z.string()).optional().describe("指定した全ラベルを持つ札に絞り込む"),
+      kind: z.enum(札種別一覧).optional(),
+      status: z.enum(札状態一覧).optional(),
+      assignee: z.string().optional(),
+      labels: z.array(z.string()).optional().describe("指定した全ラベルを持つ札に絞り込む"),
     },
-    async ({ 種別, 状態, 担当者, ラベル一覧 }) => {
+    async ({ kind, status, assignee, labels }) => {
       const 応答 = await 札一覧を取得する(fudabaBaseUrl);
       if (応答.種別 === "失敗") {
         return { content: [{ type: "text", text: 応答を整形する(応答) }] };
@@ -158,10 +158,10 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
       const 絞り込み済み: Fudaba応答 = {
         種別: "成功",
         データ: 一覧を絞り込む(応答.データ, {
-          ...(種別 !== undefined ? { 種別 } : {}),
-          ...(状態 !== undefined ? { 状態 } : {}),
-          ...(担当者 !== undefined ? { 担当者 } : {}),
-          ...(ラベル一覧 !== undefined ? { ラベル一覧 } : {}),
+          ...(kind !== undefined ? { 種別: kind } : {}),
+          ...(status !== undefined ? { 状態: status } : {}),
+          ...(assignee !== undefined ? { 担当者: assignee } : {}),
+          ...(labels !== undefined ? { ラベル一覧: labels } : {}),
         }),
       };
       return { content: [{ type: "text", text: 応答を整形する(絞り込み済み) }] };
