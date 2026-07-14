@@ -1,0 +1,19 @@
+{
+  // tsconfig.base.json を継承しない。base の noUncheckedIndexedAccess /
+  // exactOptionalPropertyTypes / verbatimModuleSyntax は、paths 経由でこのプログラムに
+  // 取り込まれるsubmodule（SengenUI）のソースが通らないため（AgentRoom packages/ui踏襲）。
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "sengen-ui": ["../../submodules/SengenUI/index"],
+      "sengen-ui/*": ["../../submodules/SengenUI/*"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}
