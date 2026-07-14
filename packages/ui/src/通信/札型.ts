@@ -10,8 +10,13 @@ export interface 札DTO {
   readonly 担当者: string | null;
   readonly 作成者: string;
   readonly ルーム名: string | null;
+  readonly ラベル一覧: readonly string[];
   readonly 作成時刻: string;
   readonly 更新時刻: string;
+}
+
+function 文字列配列か(値: unknown): 値 is string[] {
+  return Array.isArray(値) && 値.every((項目) => typeof 項目 === "string");
 }
 
 export function 札DTOか(値: unknown): 値 is 札DTO {
@@ -34,6 +39,8 @@ export function 札DTOか(値: unknown): 値 is 札DTO {
     typeof 値.作成者 === "string" &&
     "ルーム名" in 値 &&
     (値.ルーム名 === null || typeof 値.ルーム名 === "string") &&
+    "ラベル一覧" in 値 &&
+    文字列配列か(値.ラベル一覧) &&
     "更新時刻" in 値 &&
     typeof 値.更新時刻 === "string"
   );
@@ -57,4 +64,5 @@ export interface 札更新入力 {
   readonly 本文: string | undefined;
   readonly 状態: string | undefined;
   readonly 担当者: string | null | undefined;
+  readonly ラベル一覧: readonly string[] | undefined;
 }

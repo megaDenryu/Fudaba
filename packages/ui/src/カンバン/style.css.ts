@@ -1,6 +1,7 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 import { 狭幅メディアクエリ } from "../レスポンシブ";
 import { Fudabaテーマ配色, Fudaba警告色 } from "../テーマ";
+import { フィルタチップ選択状態 } from "./フィルタチップ選択状態";
 import {
   詳細パネル開閉状態,
   詳細保存ボタン表示状態,
@@ -46,6 +47,56 @@ export const 状態表示 = style({
   flexShrink: 0,
   ":empty": { display: "none" },
 });
+
+// --- フィルタバー ---
+
+export const フィルタバー = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "10px",
+  padding: "6px 14px",
+  borderBottom: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
+  flexShrink: 0,
+});
+
+export const フィルタセクション = style({
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  flexWrap: "wrap",
+});
+
+export const フィルタラベル = style({
+  fontSize: "11px",
+  color: Fudabaテーマ配色.テキスト薄,
+  fontWeight: 600,
+});
+
+export const フィルタ行 = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "4px",
+});
+
+export const フィルタチップ = style({
+  border: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
+  borderRadius: "10px",
+  padding: "2px 8px",
+  fontSize: "11px",
+  cursor: "pointer",
+  color: Fudabaテーマ配色.テキスト副,
+  backgroundColor: Fudabaテーマ配色.パネル表面,
+  "@media": { [狭幅メディアクエリ]: { padding: "6px 12px", fontSize: "12px" } },
+});
+
+globalStyle(
+  `${フィルタチップ}[${フィルタチップ選択状態.attribute}="${フィルタチップ選択状態.value.選択中}"]`,
+  {
+    backgroundColor: Fudabaテーマ配色.ネイビー,
+    borderColor: Fudabaテーマ配色.ネイビー,
+    color: "#ffffff",
+  },
+);
 
 // --- 新規作成フォーム ---
 
@@ -176,6 +227,22 @@ export const カードタイトル = style({
 
 export const カード担当者 = style({ fontSize: "11px", color: Fudabaテーマ配色.テキスト副 });
 
+export const カードラベル行 = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "4px",
+  marginTop: "2px",
+});
+
+export const ラベルチップ = style({
+  border: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
+  borderRadius: "10px",
+  padding: "1px 7px",
+  fontSize: "10px",
+  color: Fudabaテーマ配色.テキスト副,
+  backgroundColor: Fudabaテーマ配色.背景,
+});
+
 export const 種別バッジ = style({
   color: "#ffffff",
   borderRadius: "3px",
@@ -273,6 +340,7 @@ export const 詳細本文入力 = style({
 });
 export const 詳細状態セレクト = style({ ...フォームコントロール基本, width: "100%" });
 export const 詳細担当者入力 = style({ ...フォームコントロール基本, width: "100%" });
+export const 詳細ラベル入力欄 = style({ ...フォームコントロール基本, width: "100%" });
 
 export const 詳細行 = style({ display: "flex", gap: "10px" });
 export const 詳細フィールド = style({ display: "flex", flexDirection: "column", gap: "4px", flex: 1 });
