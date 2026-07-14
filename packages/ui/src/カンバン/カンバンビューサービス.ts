@@ -1,3 +1,4 @@
+import type { キャラクライアント } from "../通信/キャラクライアント";
 import type { 札クライアント } from "../通信/札クライアント";
 import type { 札DTO, 札作成入力, 札更新入力 } from "../通信/札型";
 import { ファイルをデータURLに変換する } from "./添付データURL変換";
@@ -12,7 +13,7 @@ import {
 } from "./フィルタ状態";
 import { 札がフィルタに一致するか } from "./フィルタ判定";
 import { 状態表示ラベル } from "./状態表示ラベル";
-import { 担当者候補一覧を抽出する } from "./担当者候補抽出";
+import { 担当者候補一覧を抽出する, 担当者候補を合成する } from "./担当者候補抽出";
 import { ラベル候補一覧を抽出する } from "./ラベル候補抽出";
 import { 札カード } from "./札カード";
 
@@ -25,6 +26,7 @@ export class カンバンビューサービス {
 
   constructor(
     private readonly _クライアント: 札クライアント,
+    private readonly _キャラクライアント: キャラクライアント,
     private readonly _部品: カンバンビュー部品,
     private readonly _状態表示: 状態表示ラベル,
   ) {}
@@ -34,7 +36,7 @@ export class カンバンビューサービス {
       const 一覧 = await this._クライアント.一覧を取得する();
       this._最新一覧 = 一覧;
       this._列へ振り分ける();
-      const 担当者候補 = 担当者候補一覧を抽出する(一覧);
+      const 担当者候補 = await this._担当者候補を取得する(一覧);
       const ラベル候補 = ラベル候補一覧を抽出する(一覧);
       this._部品.新規作成フォーム.担当者候補を更新する(担当者候補);
       this._部品.新規作成フォーム.ラベル候補を更新する(ラベル候補);
@@ -136,6 +138,17 @@ export class カンバンビューサービス {
       this._状態表示.エラーを表示する(
         エラー instanceof Error ? エラー.message : "添付の削除に失敗しました",
       );
+    }
+  }
+
+  // キャラ一覧の取得はAgentRoomサーバーへの依存を伴う付随情報のため、失敗しても
+  // 札一覧表示自体は壊さず、札由来の候補だけにサイレントフォールバックする
+  private async _担当者候補を取得する(札一覧: readonly 札DTO[]): Promise<string[]> {
+    try {
+      const キャラ一覧 = await this._キャラクライアント.一覧を取得する();
+      return 担当者候補を合成する(札一覧, キャラ一覧);
+    } catch {
+      return 担当者候補一覧を抽出する(札一覧);
     }
   }
 
