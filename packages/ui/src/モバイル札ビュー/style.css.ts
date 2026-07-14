@@ -88,34 +88,56 @@ export const 一覧カード = style({
   backgroundColor: Fudabaテーマ配色.パネル表面,
   cursor: "pointer",
   minHeight: "44px",
+  // 縦1列リストはoverflow-yスクロールの列flexコンテナに並ぶ。カード側に
+  // flexShrink:0が無いと、内容が長いカードの高さがWebKit系ブラウザで
+  // 圧縮されて計算され、次のカードが前のカードの下段（状態表示等）に
+  // めり込んで見える不具合が起きる。overflowはその保険として、それでも
+  // なお内容があふれた場合にカード外へはみ出させず自身の枠内で止める
+  flexShrink: 0,
+  overflow: "hidden",
 });
 
 export const 一覧カード上段 = style({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
+  gap: "8px",
+  minWidth: 0,
 });
 
-export const 一覧カードID = style({ fontSize: "11px", color: Fudabaテーマ配色.テキスト薄 });
+export const 一覧カードID = style({
+  fontSize: "11px",
+  color: Fudabaテーマ配色.テキスト薄,
+  flexShrink: 0,
+});
 
 export const 一覧カードタイトル = style({
   fontSize: "14px",
   fontWeight: 600,
   overflowWrap: "anywhere",
+  wordBreak: "break-word",
+  // フレックスアイテムの既定min-width:autoは内容の最小サイズを優先し、
+  // overflow-wrap指定だけでは折り返し不可能な長文（英数字の連続等）で
+  // カード自体を横に押し広げてしまう。0にして列幅への収まりを優先する
+  minWidth: 0,
 });
 
 export const 一覧カード下段 = style({
   display: "flex",
+  flexWrap: "wrap",
   justifyContent: "space-between",
   alignItems: "center",
+  gap: "4px",
   fontSize: "12px",
   color: Fudabaテーマ配色.テキスト副,
+  minWidth: 0,
 });
 
 export const 一覧カードラベル行 = style({
   display: "flex",
   flexWrap: "wrap",
   gap: "4px",
+  minWidth: 0,
 });
 
 export const 作成ボタン = style({
