@@ -52,6 +52,7 @@ export interface 札作成入力 {
 }
 
 export interface 札更新入力 {
+  readonly 種別: string | undefined;
   readonly タイトル: string | undefined;
   readonly 本文: string | undefined;
   readonly 状態: string | undefined;
