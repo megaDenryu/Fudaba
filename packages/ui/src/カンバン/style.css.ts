@@ -8,6 +8,7 @@ import {
   詳細保存ボタン表示状態,
   詳細保存完了ラベル表示状態,
 } from "./詳細パネル状態";
+import { 淀み表示状態 } from "./淀み表示状態";
 
 export const ルート = style({
   display: "flex",
@@ -228,6 +229,23 @@ export const カードタイトル = style({
 
 export const カード担当者 = style({ fontSize: "11px", color: Fudabaテーマ配色.テキスト副 });
 
+// 進行中×担当者presence不明の淀んだ札を控えめに強調する枠色(絵文字は使わずバッジ文言のみ)
+globalStyle(`${カード}[${淀み表示状態.attribute}="${淀み表示状態.value.淀み}"]`, {
+  borderColor: Fudaba警告色.境界,
+  backgroundColor: Fudaba警告色.背景弱,
+});
+
+export const 淀みバッジ = style({
+  alignSelf: "flex-start",
+  border: `1px solid ${Fudaba警告色.境界}`,
+  borderRadius: "10px",
+  padding: "1px 7px",
+  fontSize: "10px",
+  fontWeight: 600,
+  color: Fudaba警告色.文字,
+  backgroundColor: Fudaba警告色.背景弱,
+});
+
 export const カードラベル行 = style({
   display: "flex",
   flexWrap: "wrap",
@@ -342,6 +360,18 @@ export const 詳細本文入力 = style({
 export const 詳細状態セレクト = style({ ...フォームコントロール基本, width: "100%" });
 export const 詳細担当者入力 = style({ ...フォームコントロール基本, width: "100%" });
 export const 詳細ラベル入力欄 = style({ ...フォームコントロール基本, width: "100%" });
+
+export const 詳細担当解除ボタン = style({
+  alignSelf: "flex-start",
+  border: `1px solid ${Fudaba警告色.境界}`,
+  borderRadius: "4px",
+  backgroundColor: "transparent",
+  color: Fudaba警告色.文字,
+  padding: "4px 10px",
+  fontSize: "11px",
+  cursor: "pointer",
+  ":disabled": { opacity: 0.4, cursor: "default" },
+});
 
 export const 詳細行 = style({ display: "flex", gap: "10px" });
 export const 詳細フィールド = style({ display: "flex", flexDirection: "column", gap: "4px", flex: 1 });

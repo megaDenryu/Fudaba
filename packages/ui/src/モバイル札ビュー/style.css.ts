@@ -3,6 +3,7 @@ import {
   詳細保存ボタン表示状態,
   詳細保存完了ラベル表示状態,
 } from "../カンバン/詳細パネル状態";
+import { 淀み表示状態 } from "../カンバン/淀み表示状態";
 import { Fudabaテーマ配色, Fudaba警告色 } from "../テーマ";
 import { シート開閉状態 } from "./シート開閉状態";
 
@@ -120,6 +121,23 @@ export const 一覧カードタイトル = style({
   // overflow-wrap指定だけでは折り返し不可能な長文（英数字の連続等）で
   // カード自体を横に押し広げてしまう。0にして列幅への収まりを優先する
   minWidth: 0,
+});
+
+// 進行中×担当者presence不明の淀んだ札を控えめに強調する枠色(絵文字は使わずバッジ文言のみ)
+globalStyle(`${一覧カード}[${淀み表示状態.attribute}="${淀み表示状態.value.淀み}"]`, {
+  borderColor: Fudaba警告色.境界,
+  backgroundColor: Fudaba警告色.背景弱,
+});
+
+export const 淀みバッジ = style({
+  alignSelf: "flex-start",
+  border: `1px solid ${Fudaba警告色.境界}`,
+  borderRadius: "10px",
+  padding: "2px 8px",
+  fontSize: "11px",
+  fontWeight: 600,
+  color: Fudaba警告色.文字,
+  backgroundColor: Fudaba警告色.背景弱,
 });
 
 export const 一覧カード下段 = style({
@@ -244,6 +262,19 @@ export const シートフィールドラベル = style({
 export const シート入力 = style({ ...フィールド共通 });
 export const シート本文入力 = style({ ...フィールド共通, resize: "vertical" });
 export const シートセレクト = style({ ...フィールド共通 });
+
+export const シート担当解除ボタン = style({
+  alignSelf: "flex-start",
+  border: `1px solid ${Fudaba警告色.境界}`,
+  borderRadius: "6px",
+  backgroundColor: "transparent",
+  color: Fudaba警告色.文字,
+  minHeight: "44px",
+  padding: "8px 14px",
+  fontSize: "13px",
+  cursor: "pointer",
+  ":disabled": { opacity: 0.4, cursor: "default" },
+});
 
 export const シート保存ボタン行 = style({
   display: "flex",

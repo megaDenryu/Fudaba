@@ -1,4 +1,7 @@
+import type { キャラDTO } from "../通信/キャラ型";
 import type { キャラクライアント } from "../通信/キャラクライアント";
+import type { 稼働表明DTO } from "../通信/稼働型";
+import type { 稼働クライアント } from "../通信/稼働クライアント";
 import type { 札クライアント } from "../通信/札クライアント";
 import type { 札DTO, 札作成入力, 札更新入力 } from "../通信/札型";
 import { ファイルをデータURLに変換する } from "./添付データURL変換";
@@ -13,9 +16,10 @@ import {
 } from "./フィルタ状態";
 import { 札がフィルタに一致するか } from "./フィルタ判定";
 import { 状態表示ラベル } from "./状態表示ラベル";
-import { 担当者候補一覧を抽出する, 担当者候補を合成する } from "./担当者候補抽出";
+import { 担当者候補を合成する } from "./担当者候補抽出";
 import { ラベル候補一覧を抽出する } from "./ラベル候補抽出";
 import { 札カード } from "./札カード";
+import { AI担当者名集合を作る, 稼働状態マップを作る, 淀んでいるか } from "./淀み判定";
 
 // カンバンビューのロジック層。API呼び出しと4列への振り分けを担い、
 // ビュー本体は配線に徹する（AgentRoomのルーム一覧サイドバーサービスと同じ構成方針）。
@@ -23,10 +27,13 @@ import { 札カード } from "./札カード";
 export class カンバンビューサービス {
   private _フィルタ状態: カンバンフィルタ状態 = 初期カンバンフィルタ状態;
   private _最新一覧: readonly 札DTO[] = [];
+  private _AI担当者名集合: ReadonlySet<string> = new Set();
+  private _稼働状態マップ: ReadonlyMap<string, string> = new Map();
 
   constructor(
     private readonly _クライアント: 札クライアント,
     private readonly _キャラクライアント: キャラクライアント,
+    private readonly _稼働クライアント: 稼働クライアント,
     private readonly _部品: カンバンビュー部品,
     private readonly _状態表示: 状態表示ラベル,
   ) {}
@@ -35,8 +42,12 @@ export class カンバンビューサービス {
     try {
       const 一覧 = await this._クライアント.一覧を取得する();
       this._最新一覧 = 一覧;
+      const キャラ一覧 = await this._キャラ一覧を取得する();
+      const 稼働一覧 = await this._稼働一覧を取得する();
+      this._AI担当者名集合 = AI担当者名集合を作る(キャラ一覧);
+      this._稼働状態マップ = 稼働状態マップを作る(稼働一覧);
       this._列へ振り分ける();
-      const 担当者候補 = await this._担当者候補を取得する(一覧);
+      const 担当者候補 = 担当者候補を合成する(一覧, キャラ一覧);
       const ラベル候補 = ラベル候補一覧を抽出する(一覧);
       this._部品.新規作成フォーム.担当者候補を更新する(担当者候補);
       this._部品.新規作成フォーム.ラベル候補を更新する(ラベル候補);
@@ -53,6 +64,19 @@ export class カンバンビューサービス {
       );
       return undefined;
     }
+  }
+
+  // 担当解除ボタン（詳細パネル/詳細シート共通の配線）から呼ばれる。既存のPATCH経路
+  // （保存する→札クライアント.更新する）をそのまま使い、担当者だけをnullで更新する
+  async 担当を解除する(id: number): Promise<void> {
+    await this.保存する(id, {
+      種別: undefined,
+      タイトル: undefined,
+      本文: undefined,
+      状態: undefined,
+      担当者: null,
+      ラベル一覧: undefined,
+    });
   }
 
   種別フィルタを切り替える(種別: string): void {
@@ -141,14 +165,22 @@ export class カンバンビューサービス {
     }
   }
 
-  // キャラ一覧の取得はAgentRoomサーバーへの依存を伴う付随情報のため、失敗しても
-  // 札一覧表示自体は壊さず、札由来の候補だけにサイレントフォールバックする
-  private async _担当者候補を取得する(札一覧: readonly 札DTO[]): Promise<string[]> {
+  // キャラ一覧・稼働一覧の取得はAgentRoomサーバーへの依存を伴う付随情報のため、失敗しても
+  // 札一覧表示自体は壊さず、空一覧へサイレントフォールバックする（担当者候補は札由来の
+  // 分だけになり、淀み判定はAI担当者名集合が空になるため常にfalseへ倒れる）
+  private async _キャラ一覧を取得する(): Promise<readonly キャラDTO[]> {
     try {
-      const キャラ一覧 = await this._キャラクライアント.一覧を取得する();
-      return 担当者候補を合成する(札一覧, キャラ一覧);
+      return await this._キャラクライアント.一覧を取得する();
     } catch {
-      return 担当者候補一覧を抽出する(札一覧);
+      return [];
+    }
+  }
+
+  private async _稼働一覧を取得する(): Promise<readonly 稼働表明DTO[]> {
+    try {
+      return await this._稼働クライアント.一覧を取得する();
+    } catch {
+      return [];
     }
   }
 
@@ -160,7 +192,9 @@ export class カンバンビューサービス {
       const 対象カード一覧 = フィルタ済み一覧
         .filter((札) => 札.状態 === 列.状態値)
         .map((札) =>
-          new 札カード(札).配線する({ on選択: () => this._部品.詳細パネル.表示する(札) }),
+          new 札カード(札, 淀んでいるか(札, this._AI担当者名集合, this._稼働状態マップ)).配線する(
+            { on選択: () => this._部品.詳細パネル.表示する(札) },
+          ),
         );
       列.カード一覧を差し替える(対象カード一覧);
     }
