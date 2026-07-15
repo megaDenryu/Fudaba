@@ -3,8 +3,6 @@ import { 日本語辞書 } from "./カンバン内容.ja";
 type 画面文言 = typeof 日本語辞書;
 
 export const 英語辞書: 画面文言 = {
-  ヘッダタイトル: "Fudaba",
-  更新ボタン: "Refresh",
   列空表示: "No items",
   カード未割当表示: "Unassigned",
   カード淀みバッジ: "presence unknown",
