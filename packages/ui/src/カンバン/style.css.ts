@@ -20,29 +20,6 @@ export const ルート = style({
   fontFamily: Fudabaテーマ配色.基本フォントファミリ,
 });
 
-export const ヘッダ = style({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "10px 14px",
-  borderBottom: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
-  flexShrink: 0,
-});
-
-export const タイトル = style({ fontSize: "15px", fontWeight: 700 });
-
-export const 更新ボタン = style({
-  border: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
-  borderRadius: "4px",
-  backgroundColor: Fudabaテーマ配色.パネル表面,
-  color: Fudabaテーマ配色.テキスト主,
-  padding: "4px 12px",
-  fontSize: "12px",
-  cursor: "pointer",
-  ":hover": { backgroundColor: Fudabaテーマ配色.ホバー背景 },
-  "@media": { [狭幅メディアクエリ]: { minHeight: "44px", padding: "10px 14px" } },
-});
-
 export const 状態表示 = style({
   fontSize: "12px",
   color: Fudaba警告色.文字,
