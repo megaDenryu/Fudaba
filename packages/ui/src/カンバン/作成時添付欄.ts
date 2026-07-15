@@ -19,12 +19,7 @@ export class 作成時添付欄 extends LV2HtmlComponentBase {
         paths: ["M4 4h16v16H4z", "M4 16l4-4 3 3 3-4 6 5", "M8.5 8.5h.01"],
       }))
       .onClick(() => 選択.dom.element.click());
-    this._componentRoot = div({ class: styles.作成時添付欄 }).childs([
-      div({ class: styles.作成時添付見出し }).childs([
-        span({ text: "画像を添付", class: styles.詳細ラベル }), 選択ボタン, 選択,
-      ]),
-      this._一覧,
-    ]);
+    this._componentRoot = div({ class: styles.作成時添付欄 }).childs([選択ボタン, 選択, this._一覧]);
   }
 
   public 追加する(file: File): void {

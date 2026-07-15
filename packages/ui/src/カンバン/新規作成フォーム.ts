@@ -139,8 +139,7 @@ export class 新規作成フォーム
               ラベル候補,
               作成者]),
           div({ class: styles.作成エディタ }).childs([
-            添付,
-            本文,
+            div({ class: styles.フォーム本文領域 }).childs([本文, 添付]),
             button({ text: 文言.作成ボタン, class: styles.フォームボタン }).onClick(() =>
               this._作成を発火する(),
             ),
