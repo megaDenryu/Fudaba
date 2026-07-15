@@ -29,8 +29,11 @@ export const Fudaba警告色 = {
 
 // 種別バッジの配色（種別ごとに固定色だが、他の色と同様ホストのカスタムプロパティで上書き可能にする）
 export const 札種別配色: Record<string, string> = {
-  タスク: カスタムプロパティ("kind-task", "#5b4a96"),
+  実装: カスタムプロパティ("kind-implementation", "#5b4a96"),
   バグ: カスタムプロパティ("kind-bug", "#c9403a"),
+  新仕様: カスタムプロパティ("kind-new-spec", "#2563a6"),
+  仕様検討: カスタムプロパティ("kind-spec-review", "#9a5b16"),
+  タスク分解: カスタムプロパティ("kind-breakdown", "#7a4e9d"),
+  記録: カスタムプロパティ("kind-record", "#8078a4"),
   決定: カスタムプロパティ("kind-decision", "#2f7d5a"),
-  メモ: カスタムプロパティ("kind-note", "#8078a4"),
 };

@@ -45,11 +45,11 @@ describe("Fudabaルート", () => {
     const 作成応答 = await app.inject({
       method: "POST",
       url: "/api/fudaba/items",
-      payload: { 種別: "タスク", タイトル: "テスト札", 本文: "本文", 作成者: "claude" },
+      payload: { 種別: "実装", タイトル: "テスト札", 本文: "本文", 作成者: "claude" },
     });
     expect(作成応答.statusCode).toBe(201);
     const 作成結果: unknown = 作成応答.json();
-    expect(作成結果).toMatchObject({ 種別: "タスク", タイトル: "テスト札", 状態: "未着手" });
+    expect(作成結果).toMatchObject({ 種別: "実装", タイトル: "テスト札", 状態: "未着手" });
 
     const 一覧応答 = await app.inject({ method: "GET", url: "/api/fudaba/items" });
     expect(一覧応答.statusCode).toBe(200);
@@ -93,7 +93,7 @@ describe("Fudabaルート", () => {
     const 作成応答 = await app.inject({
       method: "POST",
       url: "/api/fudaba/items",
-      payload: { 種別: "メモ", タイトル: "テスト札", 本文: "", 作成者: "claude", 担当者: "codex" },
+      payload: { 種別: "記録", タイトル: "テスト札", 本文: "", 作成者: "claude", 担当者: "codex" },
     });
     const id = idを読む(作成応答.json());
 
@@ -110,7 +110,7 @@ describe("Fudabaルート", () => {
     const 作成応答 = await app.inject({
       method: "POST",
       url: "/api/fudaba/items",
-      payload: { 種別: "タスク", タイトル: "テスト札", 本文: "本文", 作成者: "claude" },
+      payload: { 種別: "実装", タイトル: "テスト札", 本文: "本文", 作成者: "claude" },
     });
     const id = idを読む(作成応答.json());
 
@@ -128,7 +128,7 @@ describe("Fudabaルート", () => {
     const 作成応答 = await app.inject({
       method: "POST",
       url: "/api/fudaba/items",
-      payload: { 種別: "タスク", タイトル: "テスト札", 本文: "本文", 作成者: "claude" },
+      payload: { 種別: "実装", タイトル: "テスト札", 本文: "本文", 作成者: "claude" },
     });
     const id = idを読む(作成応答.json());
 
@@ -157,7 +157,7 @@ describe("Fudabaルート", () => {
         method: "POST",
         url: "/api/fudaba/items",
         payload: {
-          種別: "タスク",
+          種別: "実装",
           タイトル: "テスト札",
           本文: "本文",
           作成者: "claude",
@@ -173,7 +173,7 @@ describe("Fudabaルート", () => {
       const 作成応答 = await app.inject({
         method: "POST",
         url: "/api/fudaba/items",
-        payload: { 種別: "メモ", タイトル: "テスト札", 本文: "", 作成者: "claude" },
+        payload: { 種別: "記録", タイトル: "テスト札", 本文: "", 作成者: "claude" },
       });
       expect(作成応答.json()).toMatchObject({ ラベル一覧: [] });
     });
@@ -184,7 +184,7 @@ describe("Fudabaルート", () => {
         method: "POST",
         url: "/api/fudaba/items",
         payload: {
-          種別: "タスク",
+          種別: "実装",
           タイトル: "テスト札",
           本文: "",
           作成者: "claude",
@@ -200,7 +200,7 @@ describe("Fudabaルート", () => {
         method: "POST",
         url: "/api/fudaba/items",
         payload: {
-          種別: "タスク",
+          種別: "実装",
           タイトル: "テスト札",
           本文: "",
           作成者: "claude",
@@ -224,7 +224,7 @@ describe("Fudabaルート", () => {
         method: "POST",
         url: "/api/fudaba/items",
         payload: {
-          種別: "タスク",
+          種別: "実装",
           タイトル: "両方持つ",
           本文: "",
           作成者: "claude",
@@ -235,7 +235,7 @@ describe("Fudabaルート", () => {
         method: "POST",
         url: "/api/fudaba/items",
         payload: {
-          種別: "タスク",
+          種別: "実装",
           タイトル: "片方だけ",
           本文: "",
           作成者: "claude",

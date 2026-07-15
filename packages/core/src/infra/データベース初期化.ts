@@ -39,6 +39,13 @@ function attachments列を保証する(db: Database.Database): void {
   }
 }
 
+// 旧4分類のうち意味が曖昧だった「タスク」「メモ」を、扱い方が分かる名称へ移行する。
+// バグと決定は意味が明確なので維持する。更新は冪等で、既存DBを何度開いても結果は同じ。
+function 旧札種別を移行する(db: Database.Database): void {
+  db.prepare("UPDATE fudaba_items SET kind = '実装' WHERE kind = 'タスク'").run();
+  db.prepare("UPDATE fudaba_items SET kind = '記録' WHERE kind = 'メモ'").run();
+}
+
 // スキーマ作成を1箇所に集約する。AgentRoomのDBとは別ファイル（fudaba.sqlite3）に持つ
 // （参照: Jimbo/ARCHITECTURE.md「DBファイルは機能ごとに独立」）
 export function データベースを初期化する(db: Database.Database): void {
@@ -62,4 +69,5 @@ export function データベースを初期化する(db: Database.Database): voi
   `);
   labels列を保証する(db);
   attachments列を保証する(db);
+  旧札種別を移行する(db);
 }

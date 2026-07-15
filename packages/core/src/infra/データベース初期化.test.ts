@@ -54,6 +54,7 @@ describe("データベースを初期化する", () => {
     const リポジトリ = new 札リポジトリ(db);
     const 一覧 = リポジトリ.一覧を取得する();
     expect(一覧).toHaveLength(1);
+    expect(一覧[0]?.種別.値).toBe("実装");
     expect(一覧[0]?.ラベル一覧.値一覧).toEqual([]);
     expect(一覧[0]?.添付一覧.一覧).toEqual([]);
   });
@@ -93,6 +94,7 @@ describe("データベースを初期化する", () => {
     const リポジトリ = new 札リポジトリ(db);
     const 一覧 = リポジトリ.一覧を取得する();
     expect(一覧).toHaveLength(1);
+    expect(一覧[0]?.種別.値).toBe("実装");
     expect(一覧[0]?.ラベル一覧.値一覧).toEqual(["jimbo"]);
     expect(一覧[0]?.添付一覧.一覧).toEqual([]);
   });

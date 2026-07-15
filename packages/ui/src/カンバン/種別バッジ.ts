@@ -4,7 +4,7 @@ import * as styles from "./style.css";
 
 const 既定配色 = "#8078a4";
 
-// 札の種別（タスク/バグ/決定/メモ）を色分けして表示するバッジ（LV1拡張）
+// 札の次の扱い方を示す種別を色分けして表示するバッジ（LV1拡張）
 export class 種別バッジ extends SpanC {
   constructor(種別: string) {
     super({ class: styles.種別バッジ });

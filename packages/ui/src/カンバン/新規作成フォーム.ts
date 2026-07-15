@@ -3,29 +3,29 @@ import {
   div,
   select,
   textInput,
-  textarea,
   LV2HtmlComponentBase,
   配線ポート,
   type DivC,
   type I配線可能,
   type SelectC,
-  type TextAreaC,
   type TextInputC,
 } from "sengen-ui";
-import type { 札作成入力 } from "../通信/札型";
 import { 作成者名を読み込む, 作成者名を保存する } from "../作成者名記憶";
 import { 現在ロケールを取得する } from "../文言/現在ロケール";
 import { 候補リストC } from "./候補リストC";
 import { 札種別選択肢 } from "./定数";
 import { 新規作成フォーム内容を取得する } from "./新規作成フォーム内容";
 import { ラベル文字列を配列にする } from "./ラベル入力パース";
+import { 作成時添付欄 } from "./作成時添付欄";
+import type { 札作成要求 } from "./札作成要求";
+import { 添付貼り付け対応本文入力 } from "./添付貼り付け対応本文入力";
 import * as styles from "./style.css";
 
 const 担当者候補リストID = "fudaba-新規作成フォーム-担当者候補";
 const ラベル候補リストID = "fudaba-新規作成フォーム-ラベル候補";
 
 export interface I新規作成フォーム配線 {
-  on作成(内容: 札作成入力): void;
+  on作成(要求: 札作成要求): void;
 }
 
 // 新規札の作成フォーム（LV2素部品）。作成そのもの（API呼び出し）は配線先（カンバンビュー
@@ -38,7 +38,8 @@ export class 新規作成フォーム
   private readonly _配線 = new 配線ポート<I新規作成フォーム配線>("新規作成フォーム");
   private readonly _種別: SelectC;
   private readonly _タイトル: TextInputC;
-  private readonly _本文: TextAreaC;
+  private readonly _本文: 添付貼り付け対応本文入力;
+  private readonly _添付 = new 作成時添付欄();
   private readonly _担当者: TextInputC;
   private readonly _担当者候補 = new 候補リストC(担当者候補リストID);
   private readonly _ラベル: TextInputC;
@@ -60,11 +61,14 @@ export class 新規作成フォーム
       placeholder: 文言.タイトルプレースホルダー,
       class: styles.フォーム入力,
     }).onEnterKey(() => this._作成を発火する());
-    this._本文 = textarea({
+    this._本文 = new 添付貼り付け対応本文入力({
       placeholder: 文言.本文プレースホルダー,
       rows: 2,
       class: styles.フォーム本文,
-    });
+    }).入力に合わせて高さを調整する()
+      .on画像貼り付け((file) => this._添付.追加する(file))
+      .on画像ドロップ((file) => this._添付.追加する(file))
+      .on保存ショートカット(() => this._作成を発火する());
     this._担当者 = textInput({
       placeholder: 文言.担当者プレースホルダー,
       class: styles.フォーム担当者,
@@ -82,6 +86,7 @@ export class 新規作成フォーム
       this._種別,
       this._タイトル,
       this._本文,
+      this._添付,
       this._担当者,
       this._担当者候補,
       this._ラベル,
@@ -100,6 +105,7 @@ export class 新規作成フォーム
     this._本文.setValue("");
     this._担当者.setValue("");
     this._ラベル.setValue("");
+    this._添付.クリアする();
   }
 
   担当者候補を更新する(候補一覧: readonly string[]): void {
@@ -113,7 +119,8 @@ export class 新規作成フォーム
   private _ルートを構築する(
     種別: SelectC,
     タイトル: TextInputC,
-    本文: TextAreaC,
+    本文: 添付貼り付け対応本文入力,
+    添付: 作成時添付欄,
     担当者: TextInputC,
     担当者候補: 候補リストC,
     ラベル: TextInputC,
@@ -130,11 +137,14 @@ export class 新規作成フォーム
               担当者候補,
               ラベル,
               ラベル候補,
-              作成者,
-              button({ text: 文言.作成ボタン, class: styles.フォームボタン }).onClick(() =>
-                this._作成を発火する(),
-              )]),
-          本文])
+              作成者]),
+          div({ class: styles.作成エディタ }).childs([
+            添付,
+            本文,
+            button({ text: 文言.作成ボタン, class: styles.フォームボタン }).onClick(() =>
+              this._作成を発火する(),
+            ),
+          ])])
     );
   }
 
@@ -146,12 +156,12 @@ export class 新規作成フォーム
     作成者名を保存する(作成者);
     const 担当者 = this._担当者.getValue().trim();
     this._配線.先.on作成({
-      種別: this._種別.getValue(),
-      タイトル,
-      本文: this._本文.getValue(),
-      担当者: 担当者.length === 0 ? undefined : 担当者,
-      作成者,
-      ラベル一覧: ラベル文字列を配列にする(this._ラベル.getValue()),
+      内容: {
+        種別: this._種別.getValue(), タイトル, 本文: this._本文.getValue(),
+        担当者: 担当者.length === 0 ? undefined : 担当者, 作成者,
+        ラベル一覧: ラベル文字列を配列にする(this._ラベル.getValue()),
+      },
+      添付ファイル一覧: this._添付.ファイル一覧(),
     });
   }
 }

@@ -260,7 +260,9 @@ export const シートフィールドラベル = style({
 });
 
 export const シート入力 = style({ ...フィールド共通 });
-export const シート本文入力 = style({ ...フィールド共通, resize: "vertical" });
+export const シート本文入力 = style({
+  ...フィールド共通, resize: "none", minHeight: "76px", maxHeight: "40vh", overflowY: "auto",
+});
 export const シートセレクト = style({ ...フィールド共通 });
 
 export const シート担当解除ボタン = style({
