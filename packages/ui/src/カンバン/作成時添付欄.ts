@@ -1,4 +1,4 @@
-import { button, div, fileInput, span, LV2HtmlComponentBase, type DivC } from "sengen-ui";
+import { button, div, fileInput, icon, span, LV2HtmlComponentBase, type DivC } from "sengen-ui";
 import * as styles from "./style.css";
 
 export class 作成時添付欄 extends LV2HtmlComponentBase {
@@ -9,16 +9,22 @@ export class 作成時添付欄 extends LV2HtmlComponentBase {
   public constructor() {
     super();
     const 選択 = fileInput({ accept: "image/*", class: styles.作成時添付選択 })
+      .setStyleCSS({ display: "none" })
       .onFileSelected((file) => this.追加する(file));
+    const 選択ボタン = button({ class: styles.作成時添付選択ボタン })
+      .setAttribute("title", "画像ファイルを添付")
+      .child(icon({
+        size: 18,
+        color: "currentColor",
+        paths: ["M4 4h16v16H4z", "M4 16l4-4 3 3 3-4 6 5", "M8.5 8.5h.01"],
+      }))
+      .onClick(() => 選択.dom.element.click());
     this._componentRoot = div({ class: styles.作成時添付欄 }).childs([
       div({ class: styles.作成時添付見出し }).childs([
-        span({ text: "画像を添付", class: styles.詳細ラベル }), 選択,
+        span({ text: "画像を添付", class: styles.詳細ラベル }), 選択ボタン, 選択,
       ]),
-      span({ text: "ここへ画像をドロップ、または本文欄へ貼り付け", class: styles.添付ヒント }),
       this._一覧,
     ]);
-    this._componentRoot.dom.element.addEventListener("dragover", (event) => event.preventDefault());
-    this._componentRoot.dom.element.addEventListener("drop", (event) => this._ドロップを受け取る(event));
   }
 
   public 追加する(file: File): void {
@@ -29,13 +35,6 @@ export class 作成時添付欄 extends LV2HtmlComponentBase {
   public ファイル一覧(): readonly File[] { return [...this._ファイル一覧]; }
   public クリアする(): void { this._ファイル一覧 = []; this._再描画する(); }
 
-  private _ドロップを受け取る(event: Event): void {
-    if (!(event instanceof DragEvent)) return;
-    const images = [...(event.dataTransfer?.files ?? [])].filter((file) => file.type.startsWith("image/"));
-    if (images.length === 0) return;
-    event.preventDefault();
-    images.forEach((file) => this.追加する(file));
-  }
   private _再描画する(): void {
     this._一覧.clearChildren().childs(this._ファイル一覧.map((file, index) =>
       div({ class: styles.作成時添付項目 }).childs([

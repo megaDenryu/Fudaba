@@ -134,6 +134,20 @@ export const 作成時添付欄 = style({
 });
 export const 作成時添付見出し = style({ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" });
 export const 作成時添付選択 = style({ fontSize: "11px", maxWidth: "220px" });
+export const 作成時添付選択ボタン = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "28px",
+  height: "28px",
+  padding: 0,
+  border: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
+  borderRadius: "5px",
+  backgroundColor: Fudabaテーマ配色.パネル表面,
+  color: Fudabaテーマ配色.テキスト副,
+  cursor: "pointer",
+  ":hover": { color: Fudabaテーマ配色.アクセント, borderColor: Fudabaテーマ配色.アクセント },
+});
 export const 作成時添付一覧 = style({ display: "flex", flexWrap: "wrap", gap: "5px" });
 export const 作成時添付項目 = style({
   display: "flex", alignItems: "center", gap: "5px", maxWidth: "260px", padding: "3px 7px",
