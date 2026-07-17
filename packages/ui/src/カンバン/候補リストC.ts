@@ -1,5 +1,6 @@
 import { LV1HtmlComponentBase } from "sengen-ui/SengenBase/LV1HtmlComponentBase";
 import { HtmlElementProxy } from "sengen-ui/SengenBase/DomProxy";
+import { 複数ラベル入力向け候補を作る } from "./複数ラベル候補";
 
 // 前提: SengenUI(submodules/SengenUI)にはdatalist相当のLV1プリミティブが無い。
 // 本来はSengenUI本体に追加すべき拡張だが、今回の変更対象はFudabaリポジトリに限定されるため、
@@ -29,5 +30,9 @@ export class 候補リストC extends LV1HtmlComponentBase {
       }),
     );
     return this;
+  }
+
+  複数ラベル候補を設定する(入力値: string, 候補一覧: readonly string[]): this {
+    return this.候補を設定する(複数ラベル入力向け候補を作る(入力値, 候補一覧));
   }
 }

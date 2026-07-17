@@ -6,20 +6,24 @@ export class 作成時添付欄 extends LV2HtmlComponentBase {
   private readonly _一覧 = div({ class: styles.作成時添付一覧 });
   private _ファイル一覧: File[] = [];
 
-  public constructor() {
+  public constructor(明示表示 = false) {
     super();
     const 選択 = fileInput({ accept: "image/*", class: styles.作成時添付選択 })
       .setStyleCSS({ display: "none" })
       .onFileSelected((file) => this.追加する(file));
     const 選択ボタン = button({ class: styles.作成時添付選択ボタン })
       .setAttribute("title", "画像ファイルを添付")
-      .child(icon({
+      .childs([icon({
         size: 18,
         color: "currentColor",
         paths: ["M4 4h16v16H4z", "M4 16l4-4 3 3 3-4 6 5", "M8.5 8.5h.01"],
-      }))
+      }), ...(明示表示 ? [span({ text: "画像を追加" })] : [])])
       .onClick(() => 選択.dom.element.click());
     this._componentRoot = div({ class: styles.作成時添付欄 }).childs([選択ボタン, 選択, this._一覧]);
+    if (明示表示) {
+      this._componentRoot.setStyleCSS({ position: "static", alignItems: "stretch", padding: "0" });
+      選択ボタン.setStyleCSS({ width: "100%", height: "40px", gap: "8px" });
+    }
   }
 
   public 追加する(file: File): void {

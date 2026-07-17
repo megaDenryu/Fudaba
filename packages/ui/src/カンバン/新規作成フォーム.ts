@@ -44,6 +44,7 @@ export class 新規作成フォーム
   private readonly _担当者候補 = new 候補リストC(担当者候補リストID);
   private readonly _ラベル: TextInputC;
   private readonly _ラベル候補 = new 候補リストC(ラベル候補リストID);
+  private _ラベル候補一覧: readonly string[] = [];
   private readonly _作成者: TextInputC;
 
   constructor() {
@@ -76,7 +77,10 @@ export class 新規作成フォーム
     this._ラベル = textInput({
       placeholder: 文言.ラベルプレースホルダー,
       class: styles.フォーム担当者,
-    }).setAttribute("list", ラベル候補リストID);
+    }).setAttribute("list", ラベル候補リストID)
+      .onInput(() => this._ラベル候補.複数ラベル候補を設定する(
+        this._ラベル.getValue(), this._ラベル候補一覧,
+      ));
     this._作成者 = textInput({
       placeholder: 文言.作成者プレースホルダー,
       value: 作成者名を読み込む(),
@@ -113,7 +117,8 @@ export class 新規作成フォーム
   }
 
   ラベル候補を更新する(候補一覧: readonly string[]): void {
-    this._ラベル候補.候補を設定する(候補一覧);
+    this._ラベル候補一覧 = [...候補一覧];
+    this._ラベル候補.複数ラベル候補を設定する(this._ラベル.getValue(), 候補一覧);
   }
 
   private _ルートを構築する(
