@@ -1,195 +1,78 @@
-import { 状態表示ラベル } from "../カンバン/状態表示ラベル";
-import { 担当者候補を合成する } from "../カンバン/担当者候補抽出";
-import { ファイルをデータURLに変換する } from "../カンバン/添付データURL変換";
-import { 札状態選択肢, 添付最大バイト数 } from "../カンバン/定数";
-import { ラベル候補一覧を抽出する } from "../カンバン/ラベル候補抽出";
-import { AI担当者名集合を作る, 稼働状態マップを作る, 淀んでいるか } from "../カンバン/淀み判定";
-import type { キャラDTO } from "../通信/キャラ型";
+import { 札API操作サービス } from "../カンバン/札API操作サービス";
+import { 札一覧表示情報を取得する } from "../カンバン/札一覧表示情報";
+import type { 札作成要求 } from "../カンバン/札作成要求";
+import type { 状態表示ラベル } from "../カンバン/状態表示ラベル";
+import { 札状態選択肢 } from "../カンバン/定数";
+import { 淀んでいるか } from "../カンバン/淀み判定";
 import type { キャラクライアント } from "../通信/キャラクライアント";
-import type { 稼働表明DTO } from "../通信/稼働型";
 import type { 稼働クライアント } from "../通信/稼働クライアント";
 import type { 札クライアント } from "../通信/札クライアント";
 import type { 札DTO, 札更新入力 } from "../通信/札型";
-import type { 札作成要求 } from "../カンバン/札作成要求";
 import { 現在ロケールを取得する } from "../文言/現在ロケール";
 import { モバイル札ビュー内容を取得する } from "./モバイル札ビュー内容";
-import { モバイル札ビュー部品 } from "./モバイル札ビュー部品";
+import type { モバイル札ビュー部品 } from "./モバイル札ビュー部品";
 import { 札リストカード } from "./札リストカード";
 
-// モバイル札ビューのロジック層。API呼び出しと選択中の状態タブへの絞り込みを担う
-// （カンバンビューサービスと同じ構成方針。状態は単一選択のセグメントタブで表す）
 export class モバイル札ビューサービス {
-  private _選択中の状態: string = 札状態選択肢[0];
-  private _最新一覧: readonly 札DTO[] = [];
-  private _AI担当者名集合: ReadonlySet<string> = new Set();
-  private _稼働状態マップ: ReadonlyMap<string, string> = new Map();
+  private _選択状態: string = 札状態選択肢[0];
+  private _一覧: readonly 札DTO[] = [];
+  private _AI名: ReadonlySet<string> = new Set();
+  private _稼働: ReadonlyMap<string, string> = new Map();
   private readonly _文言 = モバイル札ビュー内容を取得する(現在ロケールを取得する());
+  private readonly _操作: 札API操作サービス;
 
   constructor(
-    private readonly _クライアント: 札クライアント,
-    private readonly _キャラクライアント: キャラクライアント,
-    private readonly _稼働クライアント: 稼働クライアント,
-    private readonly _部品: モバイル札ビュー部品,
-    private readonly _状態表示: 状態表示ラベル,
-  ) {}
+    private readonly _client: 札クライアント, private readonly _キャラ: キャラクライアント,
+    private readonly _稼働client: 稼働クライアント, private readonly _部品: モバイル札ビュー部品,
+    private readonly _状態: 状態表示ラベル,
+  ) {
+    this._操作 = new 札API操作サービス(_client, _状態, {
+      添付超過: this._文言.添付サイズ超過メッセージを作る,
+      作成失敗: this._文言.エラー札作成失敗, 更新失敗: this._文言.エラー札更新失敗,
+      添付追加失敗: this._文言.エラー添付追加失敗, 添付削除失敗: this._文言.エラー添付削除失敗,
+    }, () => this.更新する());
+  }
 
   async 更新する(): Promise<readonly 札DTO[] | undefined> {
     try {
-      const 一覧 = await this._クライアント.一覧を取得する();
-      this._最新一覧 = 一覧;
-      const キャラ一覧 = await this._キャラ一覧を取得する();
-      const 稼働一覧 = await this._稼働一覧を取得する();
-      this._AI担当者名集合 = AI担当者名集合を作る(キャラ一覧);
-      this._稼働状態マップ = 稼働状態マップを作る(稼働一覧);
-      this._リストへ反映する();
-      const 担当者候補 = 担当者候補を合成する(一覧, キャラ一覧);
-      const ラベル候補 = ラベル候補一覧を抽出する(一覧);
-      this._部品.詳細シート.担当者候補を更新する(担当者候補);
-      this._部品.詳細シート.ラベル候補を更新する(ラベル候補);
-      this._部品.作成シート.担当者候補を更新する(担当者候補);
-      this._部品.作成シート.ラベル候補を更新する(ラベル候補);
-      this._状態表示.クリアする();
-      return 一覧;
-    } catch (エラー) {
-      this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : this._文言.エラー札一覧取得失敗,
-      );
+      this._一覧 = await this._client.一覧を取得する();
+      const 情報 = await 札一覧表示情報を取得する(this._一覧, this._キャラ, this._稼働client);
+      this._AI名 = 情報.AI担当者名集合; this._稼働 = 情報.稼働状態マップ;
+      this._候補を反映する(情報.担当者候補, 情報.ラベル候補);
+      this._リストへ反映する(); this._状態.クリアする();
+      return this._一覧;
+    } catch (error) {
+      this._状態.エラーを表示する(error instanceof Error ? error.message : this._文言.エラー札一覧取得失敗);
       return undefined;
     }
   }
 
-  // 担当解除ボタン（詳細シート配線）から呼ばれる。既存のPATCH経路をそのまま使い、
-  // 担当者だけをnullで更新する（カンバンビューサービスと同じ方針）
-  async 担当を解除する(id: number): Promise<void> {
-    await this.保存する(id, {
-      種別: undefined,
-      タイトル: undefined,
-      本文: undefined,
-      状態: undefined,
-      担当者: null,
-      ラベル一覧: undefined,
-    });
-  }
-
   状態タブを選択する(状態: string): void {
-    this._選択中の状態 = 状態;
-    this._部品.状態タブ.選択状態を設定する(状態);
-    this._リストへ反映する();
+    this._選択状態 = 状態; this._部品.状態タブ.選択状態を設定する(状態); this._リストへ反映する();
   }
-
-  選択中の状態(): string {
-    return this._選択中の状態;
-  }
-
+  選択中の状態(): string { return this._選択状態; }
   async 作成する(要求: 札作成要求): Promise<void> {
-    if (要求.添付ファイル一覧.some((ファイル) => ファイル.size > 添付最大バイト数)) {
-      this._状態表示.エラーを表示する(
-        this._文言.添付サイズ超過メッセージを作る(添付最大バイト数 / (1024 * 1024)),
-      );
-      return;
-    }
-    try {
-      const 作成済み = await this._クライアント.作成する(要求.内容);
-      for (const ファイル of 要求.添付ファイル一覧) {
-        await this._添付を送信する(作成済み.id, ファイル);
-      }
-      this._部品.作成シート.クリアする();
-      this._部品.作成シート.閉じる();
-      await this.更新する();
-    } catch (エラー) {
-      this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : this._文言.エラー札作成失敗,
-      );
-    }
+    await this._操作.作成する(要求, () => { this._部品.作成シート.クリアする(); this._部品.作成シート.閉じる(); });
   }
-
   async 保存する(id: number, 変更: 札更新入力): Promise<void> {
-    try {
-      await this._クライアント.更新する(id, 変更);
-      const 一覧 = await this.更新する();
-      const 保存後の札 = 一覧?.find((札) => 札.id === id);
-      if (保存後の札 !== undefined) {
-        this._部品.詳細シート.保存完了を反映する(保存後の札);
-      }
-    } catch (エラー) {
-      this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : this._文言.エラー札更新失敗,
-      );
-    }
+    await this._操作.保存する(id, 変更, (札) => this._部品.詳細シート.保存完了を反映する(札));
   }
-
-  async 添付を追加する(id: number, ファイル: File): Promise<void> {
-    if (ファイル.size > 添付最大バイト数) {
-      this._状態表示.エラーを表示する(
-        this._文言.添付サイズ超過メッセージを作る(添付最大バイト数 / (1024 * 1024)),
-      );
-      return;
-    }
-    try {
-      await this._添付を送信する(id, ファイル);
-      const 一覧 = await this.更新する();
-      const 対象 = 一覧?.find((札) => 札.id === id);
-      if (対象 !== undefined) {
-        this._部品.詳細シート.添付一覧を反映する(対象);
-      }
-    } catch (エラー) {
-      this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : this._文言.エラー添付追加失敗,
-      );
-    }
+  async 担当を解除する(id: number): Promise<void> { await this.保存する(id, { 担当者: null }); }
+  async 添付を追加する(id: number, file: File): Promise<void> {
+    await this._操作.添付を追加する(id, file, (札) => this._部品.詳細シート.添付一覧を反映する(札));
   }
-
-  private async _添付を送信する(id: number, ファイル: File): Promise<void> {
-    if (ファイル.size > 添付最大バイト数) {
-      throw new Error(this._文言.添付サイズ超過メッセージを作る(添付最大バイト数 / (1024 * 1024)));
-    }
-    const データURL = await ファイルをデータURLに変換する(ファイル);
-    await this._クライアント.添付を追加する(id, { ファイル名: ファイル.name, データURL });
-  }
-
   async 添付を削除する(id: number, 保存名: string): Promise<void> {
-    try {
-      await this._クライアント.添付を削除する(id, 保存名);
-      const 一覧 = await this.更新する();
-      const 対象 = 一覧?.find((札) => 札.id === id);
-      if (対象 !== undefined) {
-        this._部品.詳細シート.添付一覧を反映する(対象);
-      }
-    } catch (エラー) {
-      this._状態表示.エラーを表示する(
-        エラー instanceof Error ? エラー.message : this._文言.エラー添付削除失敗,
-      );
-    }
+    await this._操作.添付を削除する(id, 保存名, (札) => this._部品.詳細シート.添付一覧を反映する(札));
   }
 
-  // キャラ一覧・稼働一覧の取得はAgentRoomサーバーへの依存を伴う付随情報のため、失敗しても
-  // 札一覧表示自体は壊さず、空一覧へサイレントフォールバックする（カンバンビューサービスと
-  // 同じ方針。担当者候補は札由来の分だけになり、淀み判定は常にfalseへ倒れる）
-  private async _キャラ一覧を取得する(): Promise<readonly キャラDTO[]> {
-    try {
-      return await this._キャラクライアント.一覧を取得する();
-    } catch {
-      return [];
-    }
+  private _候補を反映する(担当者: readonly string[], ラベル: readonly string[]): void {
+    this._部品.詳細シート.担当者候補を更新する(担当者); this._部品.作成シート.担当者候補を更新する(担当者);
+    this._部品.詳細シート.ラベル候補を更新する(ラベル); this._部品.作成シート.ラベル候補を更新する(ラベル);
   }
-
-  private async _稼働一覧を取得する(): Promise<readonly 稼働表明DTO[]> {
-    try {
-      return await this._稼働クライアント.一覧を取得する();
-    } catch {
-      return [];
-    }
-  }
-
   private _リストへ反映する(): void {
-    const 対象カード一覧 = this._最新一覧
-      .filter((札) => 札.状態 === this._選択中の状態)
-      .map((札) =>
-        new 札リストカード(
-          札,
-          淀んでいるか(札, this._AI担当者名集合, this._稼働状態マップ),
-        ).配線する({ on選択: () => this._部品.詳細シート.表示する(札) }),
-      );
-    this._部品.リスト.全件を差し替える(対象カード一覧);
+    const cards = this._一覧.filter((札) => 札.状態 === this._選択状態)
+      .map((札) => new 札リストカード(札, 淀んでいるか(札, this._AI名, this._稼働))
+        .配線する({ on選択: () => this._部品.詳細シート.表示する(札) }));
+    this._部品.リスト.全件を差し替える(cards);
   }
 }
