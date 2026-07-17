@@ -7,6 +7,7 @@ import type { 札種別 } from "../domain/札種別.js";
 import type { 担当者 } from "../domain/担当者.js";
 import type { 札リンク } from "../domain/札リンク.js";
 import type { 札ラベル一覧 } from "../domain/札ラベル一覧.js";
+import type { 札チェックリスト } from "../domain/札チェックリスト.js";
 import { データベースを初期化する } from "./データベース初期化.js";
 import { 札リポジトリ } from "./札リポジトリ.js";
 import type { 問い, 問い選択肢, 回答済み問い, 未回答問い } from "../domain/問い.js";
@@ -59,6 +60,7 @@ export class 札ストア {
     作成者: メンバー名;
     リンク: 札リンク;
     ラベル一覧: 札ラベル一覧;
+    チェックリスト?: 札チェックリスト;
   }): 札 {
     return this.札.追加する(引数);
   }

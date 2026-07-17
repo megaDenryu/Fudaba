@@ -263,6 +263,17 @@ export const シート入力 = style({ ...フィールド共通 });
 export const シート本文入力 = style({
   ...フィールド共通, resize: "none", minHeight: "76px", maxHeight: "40vh", overflowY: "auto",
 });
+
+export const チェック進捗バッジ = style({
+  alignSelf: "flex-start", borderRadius: "10px", padding: "2px 8px", fontSize: "11px",
+  color: Fudabaテーマ配色.ネイビー, backgroundColor: Fudabaテーマ配色.ホバー背景,
+});
+
+export const 分解推奨バッジ = style({
+  alignSelf: "flex-start", border: `1px solid ${Fudaba警告色.境界}`, borderRadius: "10px",
+  padding: "2px 8px", fontSize: "11px", color: Fudaba警告色.文字,
+  backgroundColor: Fudaba警告色.背景弱,
+});
 export const シートセレクト = style({ ...フィールド共通 });
 
 export const シート担当解除ボタン = style({

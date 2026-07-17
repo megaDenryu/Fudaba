@@ -6,11 +6,25 @@ import { type 担当者, 割当済み, 未割当 } from "../domain/担当者.js"
 import { メンバー名 } from "../domain/メンバー名.js";
 import { type 札変更内容 } from "../domain/札.js";
 import { 札ラベル一覧 } from "../domain/札ラベル一覧.js";
+import { 札チェックリスト, type 札チェック項目DTO } from "../domain/札チェックリスト.js";
 
 // 各エンドポイントのリクエストボディ・パラメータは外部境界なのでunknownで受けてここで絞る
 
 function 文字列配列か(値: unknown): 値 is string[] {
   return Array.isArray(値) && 値.every((項目) => typeof 項目 === "string");
+}
+
+function チェック項目一覧を読む(値: unknown): readonly 札チェック項目DTO[] {
+  if (!Array.isArray(値)) throw new 検証エラー('"チェック項目一覧" は配列である必要があります');
+  return 値.map((項目): 札チェック項目DTO => {
+    if (
+      typeof 項目 !== "object" || 項目 === null ||
+      !("id" in 項目) || typeof 項目.id !== "string" ||
+      !("本文" in 項目) || typeof 項目.本文 !== "string" ||
+      !("完了" in 項目) || typeof 項目.完了 !== "boolean"
+    ) throw new 検証エラー('チェック項目は { "id": string, "本文": string, "完了": boolean } 形式です');
+    return { id: 項目.id, 本文: 項目.本文, 完了: 項目.完了 };
+  });
 }
 
 export interface 札作成内容 {
@@ -21,6 +35,7 @@ export interface 札作成内容 {
   readonly 作成者: string;
   readonly ルーム名: string | undefined;
   readonly ラベル一覧: 札ラベル一覧;
+  readonly チェック項目一覧: readonly 札チェック項目DTO[];
 }
 
 export function 作成内容に絞る(ボディ: unknown): 札作成内容 {
@@ -47,6 +62,9 @@ export function 作成内容に絞る(ボディ: unknown): 札作成内容 {
       "ラベル一覧" in ボディ && 文字列配列か(ボディ.ラベル一覧)
         ? 札ラベル一覧.create(ボディ.ラベル一覧)
         : 札ラベル一覧.空();
+    const チェック項目一覧 = "チェック項目一覧" in ボディ
+      ? 札チェックリスト.create(チェック項目一覧を読む(ボディ.チェック項目一覧)).項目一覧
+      : [];
     return {
       種別: ボディ.種別,
       タイトル: ボディ.タイトル,
@@ -55,6 +73,7 @@ export function 作成内容に絞る(ボディ: unknown): 札作成内容 {
       作成者: ボディ.作成者,
       ルーム名,
       ラベル一覧,
+      チェック項目一覧,
     };
   }
   throw new 検証エラー(
@@ -107,7 +126,13 @@ export function 変更内容に絞る(ボディ: unknown): 札変更内容 {
     }
     ラベル一覧 = 札ラベル一覧.create(ボディ.ラベル一覧);
   }
-  return { 種別, タイトル, 本文, 状態, 担当者, ラベル一覧 };
+  const チェックリスト = "チェック項目一覧" in ボディ
+    ? 札チェックリスト.create(チェック項目一覧を読む(ボディ.チェック項目一覧))
+    : undefined;
+  return {
+    種別, タイトル, 本文, 状態, 担当者, ラベル一覧,
+    ...(チェックリスト !== undefined ? { チェックリスト } : {}),
+  };
 }
 
 export function IDパラメータを読む(値: string): number {

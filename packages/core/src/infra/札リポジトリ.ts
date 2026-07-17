@@ -23,6 +23,11 @@ import {
   札ラベル一覧をDTO値から作る,
 } from "../domain/札ラベル一覧.js";
 import { 札行に絞る, type 札行 } from "./行検証.js";
+import {
+  札チェックリスト,
+  札チェックリストをDTO値にする,
+  札チェックリストをDTO値から作る,
+} from "../domain/札チェックリスト.js";
 
 function 行から札を復元する(行: 札行): 札 {
   return 札.create({
@@ -36,6 +41,7 @@ function 行から札を復元する(行: 札行): 札 {
     リンク: 札リンクをDTO値から作る(行.room_link),
     ラベル一覧: 札ラベル一覧をDTO値から作る(行.labels),
     添付一覧: 札添付一覧をDTO値から作る(行.attachments),
+    チェックリスト: 札チェックリストをDTO値から作る(行.checklist),
     作成時刻ISO: 行.created_at,
     更新時刻ISO: 行.updated_at,
   });
@@ -53,14 +59,15 @@ export class 札リポジトリ {
     作成者: メンバー名;
     リンク: 札リンク;
     ラベル一覧: 札ラベル一覧;
+    チェックリスト?: 札チェックリスト;
   }): 札 {
     const 時刻ISO = new Date().toISOString();
     const 状態 = 札状態.既定();
     const 添付一覧 = 札添付一覧.空();
     const 結果 = this.db
       .prepare(
-        `INSERT INTO fudaba_items (kind, title, body, status, assignee, creator, room_link, labels, attachments, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO fudaba_items (kind, title, body, status, assignee, creator, room_link, labels, attachments, checklist, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         引数.種別.値,
@@ -72,6 +79,7 @@ export class 札リポジトリ {
         札リンクをDTO値にする(引数.リンク),
         札ラベル一覧をDTO値にする(引数.ラベル一覧),
         札添付一覧をDTO値にする(添付一覧),
+        札チェックリストをDTO値にする(引数.チェックリスト ?? 札チェックリスト.空()),
         時刻ISO,
         時刻ISO,
       );
@@ -86,6 +94,7 @@ export class 札リポジトリ {
       リンク: 引数.リンク,
       ラベル一覧: 引数.ラベル一覧,
       添付一覧,
+      チェックリスト: 引数.チェックリスト ?? 札チェックリスト.空(),
       作成時刻ISO: 時刻ISO,
       更新時刻ISO: 時刻ISO,
     });
@@ -112,7 +121,7 @@ export class 札リポジトリ {
     this.db
       .prepare(
         `UPDATE fudaba_items
-         SET kind = ?, title = ?, body = ?, status = ?, assignee = ?, labels = ?, updated_at = ?
+         SET kind = ?, title = ?, body = ?, status = ?, assignee = ?, labels = ?, checklist = ?, updated_at = ?
          WHERE id = ?`,
       )
       .run(
@@ -122,6 +131,7 @@ export class 札リポジトリ {
         更新後.状態.値,
         担当者をDTO値にする(更新後.担当者),
         札ラベル一覧をDTO値にする(更新後.ラベル一覧),
+        札チェックリストをDTO値にする(更新後.チェックリスト),
         更新時刻ISO,
         id.値,
       );

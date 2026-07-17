@@ -39,6 +39,13 @@ function attachments列を保証する(db: Database.Database): void {
   }
 }
 
+function checklist列を保証する(db: Database.Database): void {
+  const 列一覧 = db.prepare("PRAGMA table_info(fudaba_items)").all().map(列情報として絞る);
+  if (!列一覧.some((列) => 列.name === "checklist")) {
+    db.exec(`ALTER TABLE fudaba_items ADD COLUMN checklist TEXT NOT NULL DEFAULT '[]'`);
+  }
+}
+
 function 問いattachments列を保証する(db: Database.Database): void {
   const 列一覧 = db.prepare("PRAGMA table_info(fudaba_questions)").all().map(列情報として絞る);
   if (!列一覧.some((列) => 列.name === "attachments")) {
@@ -69,6 +76,7 @@ export function データベースを初期化する(db: Database.Database): voi
       room_link TEXT,
       labels TEXT NOT NULL DEFAULT '[]',
       attachments TEXT NOT NULL DEFAULT '[]',
+      checklist TEXT NOT NULL DEFAULT '[]',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -116,6 +124,7 @@ export function データベースを初期化する(db: Database.Database): voi
   `);
   labels列を保証する(db);
   attachments列を保証する(db);
+  checklist列を保証する(db);
   問いattachments列を保証する(db);
   旧札種別を移行する(db);
 }

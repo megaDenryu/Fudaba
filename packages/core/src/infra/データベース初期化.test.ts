@@ -50,6 +50,11 @@ describe("データベースを初期化する", () => {
         typeof 列 === "object" && 列 !== null && "name" in 列 && 列.name === "attachments",
     );
     expect(attachments列).toBeDefined();
+    const checklist列 = 列一覧.find(
+      (列): 列 is { name: string } =>
+        typeof 列 === "object" && 列 !== null && "name" in 列 && 列.name === "checklist",
+    );
+    expect(checklist列).toBeDefined();
 
     const リポジトリ = new 札リポジトリ(db);
     const 一覧 = リポジトリ.一覧を取得する();
@@ -57,6 +62,7 @@ describe("データベースを初期化する", () => {
     expect(一覧[0]?.種別.値).toBe("実装");
     expect(一覧[0]?.ラベル一覧.値一覧).toEqual([]);
     expect(一覧[0]?.添付一覧.一覧).toEqual([]);
+    expect(一覧[0]?.チェックリスト.項目一覧).toEqual([]);
   });
 
   it("マイグレーション後も新規追加でラベルを保存できる", () => {

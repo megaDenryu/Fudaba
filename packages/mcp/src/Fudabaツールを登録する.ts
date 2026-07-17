@@ -135,8 +135,11 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
           "自由文字列タグ（省略可）。所属が決まらないアイデアはラベルなしで投げてよい。" +
             "リポジトリ名等（jimbo/fudaba/boomyack/agentroom）はラベルの慣用として使う",
         ),
+      checklist: z.array(z.string().min(1)).max(30).optional().describe(
+        "本文から分解したチェック項目。複数作業がある札では必ず設定し、5件以上なら子札への分解を検討する",
+      ),
     },
-    async ({ kind, title, body, creator, assignee, roomLink, labels }) => {
+    async ({ kind, title, body, creator, assignee, roomLink, labels, checklist }) => {
       const 応答 = await 札を作成する(fudabaBaseUrl, {
         種別: kind,
         タイトル: title,
@@ -145,6 +148,13 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
         ...(assignee !== undefined ? { 担当者: assignee } : {}),
         ...(roomLink !== undefined ? { ルーム名: roomLink } : {}),
         ...(labels !== undefined ? { ラベル一覧: labels } : {}),
+        ...(checklist !== undefined ? {
+          チェック項目一覧: checklist.map((本文, index) => ({
+            id: `task-${index + 1}`,
+            本文,
+            完了: false,
+          })),
+        } : {}),
       });
       return { content: [{ type: "text", text: 応答を整形する(応答) }] };
     },
@@ -153,7 +163,7 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
   server.tool(
     "fudaba_update",
     "Fudabaの既存の札を部分更新する。種別・タイトル・本文・状態・担当者・ラベル一覧のうち渡した" +
-      "フィールドだけが変更される。状態遷移に制約は無い（どの状態からどの状態へも変更可）。種別も" +
+      "フィールドだけが変更される。未完了チェック項目がある札は完了へ変更できない。種別も" +
       "後から変更できる（例: メモとして書いたら実はバグだった、等）。" +
       "担当者を解除するには担当者解除=true を渡す（担当者と同時指定はできない）。" +
       "ラベル一覧を渡すと既存のラベルは全て置き換わる（部分追加ではない）。",
@@ -169,8 +179,15 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
         .array(z.string())
         .optional()
         .describe("新しいラベル一覧（既存のラベルを全て置き換える）"),
+      checklist: z.array(z.object({
+        id: z.string().min(1),
+        text: z.string().min(1),
+        done: z.boolean(),
+      })).max(30).optional().describe(
+        "チェック項目一覧（全置換）。完了時は全項目done=trueが必須。大きな項目は子札へ切り出す",
+      ),
     },
-    async ({ id, kind, title, body, status, assignee, unassign, labels }) => {
+    async ({ id, kind, title, body, status, assignee, unassign, labels, checklist }) => {
       const 応答 = await 札を更新する(fudabaBaseUrl, id, {
         ...(kind !== undefined ? { 種別: kind } : {}),
         ...(title !== undefined ? { タイトル: title } : {}),
@@ -178,6 +195,13 @@ export function Fudabaツールを登録する(server: McpServer, fudabaBaseUrl:
         ...(status !== undefined ? { 状態: status } : {}),
         ...(unassign === true ? { 担当者: null } : assignee !== undefined ? { 担当者: assignee } : {}),
         ...(labels !== undefined ? { ラベル一覧: labels } : {}),
+        ...(checklist !== undefined ? {
+          チェック項目一覧: checklist.map((項目) => ({
+            id: 項目.id,
+            本文: 項目.text,
+            完了: 項目.done,
+          })),
+        } : {}),
       });
       return { content: [{ type: "text", text: 応答を整形する(応答) }] };
     },

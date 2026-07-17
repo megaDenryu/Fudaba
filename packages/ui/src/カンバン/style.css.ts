@@ -324,6 +324,17 @@ export const 詳細パネル = style({
   } },
 });
 
+export const チェック進捗バッジ = style({
+  alignSelf: "flex-start", borderRadius: "10px", padding: "2px 8px", fontSize: "11px",
+  color: Fudabaテーマ配色.ネイビー, backgroundColor: Fudabaテーマ配色.ホバー背景,
+});
+
+export const 分解推奨バッジ = style({
+  alignSelf: "flex-start", border: `1px solid ${Fudaba警告色.境界}`, borderRadius: "10px",
+  padding: "2px 8px", fontSize: "11px", color: Fudaba警告色.文字,
+  backgroundColor: Fudaba警告色.背景弱,
+});
+
 globalStyle(`${詳細パネル}[${詳細パネル開閉状態.attribute}="${詳細パネル開閉状態.value.閉}"]`, {
   display: "none",
 });

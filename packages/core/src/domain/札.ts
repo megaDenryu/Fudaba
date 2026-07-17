@@ -8,6 +8,7 @@ import { type 担当者, 担当者をDTO値にする } from "./担当者.js";
 import { type 札リンク, 札リンクをDTO値にする } from "./札リンク.js";
 import { 札ラベル一覧 } from "./札ラベル一覧.js";
 import { 札添付一覧 } from "./札添付一覧.js";
+import { 札チェックリスト, type 札チェック項目DTO } from "./札チェックリスト.js";
 
 const タイトル最大文字数 = 200;
 const 本文最大文字数 = 20_000;
@@ -21,6 +22,7 @@ export interface 札変更内容 {
   readonly 状態: 札状態 | undefined;
   readonly 担当者: 担当者 | undefined;
   readonly ラベル一覧: 札ラベル一覧 | undefined;
+  readonly チェックリスト?: 札チェックリスト;
 }
 
 // 人間とAIが共有する作業アイテム。WBS・バグシート・タスクリストの最小共通形（DESIGN.md参照）
@@ -36,6 +38,7 @@ export class 札 {
     readonly リンク: 札リンク,
     readonly ラベル一覧: 札ラベル一覧,
     readonly 添付一覧: 札添付一覧,
+    readonly チェックリスト: 札チェックリスト,
     readonly 作成時刻ISO: string,
     readonly 更新時刻ISO: string,
   ) {}
@@ -51,6 +54,7 @@ export class 札 {
     リンク: 札リンク;
     ラベル一覧: 札ラベル一覧;
     添付一覧: 札添付一覧;
+    チェックリスト?: 札チェックリスト;
     作成時刻ISO: string;
     更新時刻ISO: string;
   }): 札 {
@@ -74,6 +78,7 @@ export class 札 {
       引数.リンク,
       引数.ラベル一覧,
       引数.添付一覧,
+      引数.チェックリスト ?? 札チェックリスト.空(),
       引数.作成時刻ISO,
       引数.更新時刻ISO,
     );
@@ -82,17 +87,26 @@ export class 札 {
   // 部分更新を適用した新しい札を返す（不変性優先。既存インスタンスは変更しない）。
   // 添付一覧は札変更内容の対象外（専用エンドポイント経由でのみ変更される）なので常に維持する
   変更を適用する(変更: 札変更内容, 更新時刻ISO: string): 札 {
+    const 状態 = 変更.状態 ?? this.状態;
+    const チェックリスト = 変更.チェックリスト ?? this.チェックリスト;
+    if (状態.値 === "完了" && チェックリスト.未完了件数 > 0) {
+      throw new 検証エラー(
+        `未完了のチェック項目が${チェックリスト.未完了件数}件あるため札を完了にできません。` +
+        "項目を完了するか、独立した子札へ切り出してください",
+      );
+    }
     return 札.create({
       id: this.id.値,
       種別: 変更.種別 ?? this.種別,
       タイトル: 変更.タイトル ?? this.タイトル,
       本文: 変更.本文 ?? this.本文,
-      状態: 変更.状態 ?? this.状態,
+      状態,
       担当者: 変更.担当者 ?? this.担当者,
       作成者: this.作成者,
       リンク: this.リンク,
       ラベル一覧: 変更.ラベル一覧 ?? this.ラベル一覧,
       添付一覧: this.添付一覧,
+      チェックリスト,
       作成時刻ISO: this.作成時刻ISO,
       更新時刻ISO,
     });
@@ -112,6 +126,7 @@ export class 札 {
       リンク: this.リンク,
       ラベル一覧: this.ラベル一覧,
       添付一覧: this.添付一覧.追加する(対象),
+      チェックリスト: this.チェックリスト,
       作成時刻ISO: this.作成時刻ISO,
       更新時刻ISO,
     });
@@ -129,6 +144,7 @@ export class 札 {
       リンク: this.リンク,
       ラベル一覧: this.ラベル一覧,
       添付一覧: this.添付一覧.除外する(保存名),
+      チェックリスト: this.チェックリスト,
       作成時刻ISO: this.作成時刻ISO,
       更新時刻ISO,
     });
@@ -146,6 +162,8 @@ export class 札 {
       ルーム名: 札リンクをDTO値にする(this.リンク),
       ラベル一覧: this.ラベル一覧.値一覧,
       添付一覧: this.添付一覧.一覧.map((添付) => 添付.toJSON()),
+      チェック項目一覧: this.チェックリスト.項目一覧,
+      分解推奨: this.チェックリスト.分解推奨か,
       作成時刻: this.作成時刻ISO,
       更新時刻: this.更新時刻ISO,
     };
@@ -163,6 +181,8 @@ export interface 札DTO {
   readonly ルーム名: string | null;
   readonly ラベル一覧: readonly string[];
   readonly 添付一覧: readonly 添付DTO[];
+  readonly チェック項目一覧: readonly 札チェック項目DTO[];
+  readonly 分解推奨: boolean;
   readonly 作成時刻: string;
   readonly 更新時刻: string;
 }

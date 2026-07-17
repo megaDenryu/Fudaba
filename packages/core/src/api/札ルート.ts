@@ -19,6 +19,7 @@ import {
 import type { 札パス } from "./ルートパス型.js";
 import { Fudaba問いルートを登録する } from "./問いルート.js";
 import { Fudaba札協働ルートを登録する } from "./札協働ルート.js";
+import { 札チェックリスト } from "../domain/札チェックリスト.js";
 
 // Fudabaの3点セットのうち「サーバールート登録関数」。ホスト（ワークスペースサーバー）の
 // Fastifyインスタンスへルートを間借りするだけで、自前のポート・エラーハンドラは持たない
@@ -51,6 +52,7 @@ export function Fudabaルートを登録する(
         作成者: メンバー名.create(内容.作成者),
         リンク: 内容.ルーム名 === undefined ? 未リンク : ルームにリンクする(内容.ルーム名),
         ラベル一覧: 内容.ラベル一覧,
+        チェックリスト: 札チェックリスト.create(内容.チェック項目一覧),
       });
       return reply.code(201).send(札.toJSON());
     }),

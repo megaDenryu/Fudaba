@@ -32,6 +32,17 @@ export class 札リストカード extends DivC implements I配線可能<I札リ
           new 種別バッジ(札.種別),
           span({ text: `#${札.id}`, class: styles.一覧カードID })]),
       div({ text: 札.タイトル, class: styles.一覧カードタイトル }),
+      {
+        If: 札.チェック項目一覧.length > 0,
+        True: () => span({
+          text: `チェック ${札.チェック項目一覧.filter((項目) => 項目.完了).length}/${札.チェック項目一覧.length}`,
+          class: styles.チェック進捗バッジ,
+        }),
+      },
+      {
+        If: 札.分解推奨,
+        True: () => span({ text: "子札への分解推奨", class: styles.分解推奨バッジ }),
+      },
       div({ class: styles.一覧カード下段 }).childs([
           span({ text: 文言.カード状態接頭辞を作る(札.状態) }),
           span({ text: 担当者表示(札.担当者, 文言.カード未割当表示) })]),

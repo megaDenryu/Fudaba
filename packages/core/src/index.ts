@@ -5,6 +5,7 @@ export { Fudabaルートを登録する } from "./api/札ルート.js";
 export { 札ストア, type 札一覧フィルタ } from "./infra/札ストア.js";
 export { 添付ストレージ } from "./infra/添付ストレージ.js";
 export { 札, type 札DTO, type 札変更内容 } from "./domain/札.js";
+export { 札チェックリスト, type 札チェック項目DTO } from "./domain/札チェックリスト.js";
 export { 札ID } from "./domain/札ID.js";
 export { 札種別, 札種別一覧, type 札種別値 } from "./domain/札種別.js";
 export { 札状態, 札状態一覧, type 札状態値 } from "./domain/札状態.js";

@@ -150,6 +150,44 @@ describe("Fudabaルート", () => {
     expect(応答.statusCode).toBe(404);
   });
 
+  describe("チェックリスト", () => {
+    it("構造化した項目を保存し、未完了項目がある完了遷移を拒否する", async () => {
+      const app = アプリを作る(ストア, 添付ディレクトリ);
+      const 項目 = { id: "task-1", 本文: "テストを通す", 完了: false };
+      const 作成応答 = await app.inject({
+        method: "POST", url: "/api/fudaba/items",
+        payload: { 種別: "実装", タイトル: "複合作業", 本文: "原文", 作成者: "codex", チェック項目一覧: [項目] },
+      });
+      expect(作成応答.statusCode).toBe(201);
+      expect(作成応答.json()).toMatchObject({ チェック項目一覧: [項目], 分解推奨: false });
+      const id = idを読む(作成応答.json());
+
+      const 拒否応答 = await app.inject({ method: "PATCH", url: `/api/fudaba/items/${id}`, payload: { 状態: "完了" } });
+      expect(拒否応答.statusCode).toBe(400);
+      expect(拒否応答.body).toContain("未完了のチェック項目が1件");
+
+      const 完了応答 = await app.inject({
+        method: "PATCH", url: `/api/fudaba/items/${id}`,
+        payload: { 状態: "完了", チェック項目一覧: [{ ...項目, 完了: true }] },
+      });
+      expect(完了応答.statusCode).toBe(200);
+      expect(完了応答.json()).toMatchObject({ 状態: "完了", チェック項目一覧: [{ ...項目, 完了: true }] });
+    });
+
+    it("5項目以上なら子札への分解を推奨する", async () => {
+      const app = アプリを作る(ストア, 添付ディレクトリ);
+      const チェック項目一覧 = Array.from({ length: 5 }, (_, index) => ({
+        id: `task-${index + 1}`, 本文: `作業${index + 1}`, 完了: false,
+      }));
+      const 応答 = await app.inject({
+        method: "POST", url: "/api/fudaba/items",
+        payload: { 種別: "実装", タイトル: "大きな作業", 本文: "原文", 作成者: "codex", チェック項目一覧 },
+      });
+      expect(応答.statusCode).toBe(201);
+      expect(応答.json()).toMatchObject({ 分解推奨: true });
+    });
+  });
+
   describe("ラベル", () => {
     it("POSTでラベル一覧を指定して作成できる", async () => {
       const app = アプリを作る(ストア, 添付ディレクトリ);
