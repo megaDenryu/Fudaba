@@ -168,3 +168,12 @@ export function 一覧クエリからラベルフィルタを読む(クエリ: u
   if (文字列配列か(値)) return 値;
   throw new 検証エラー('クエリパラメータ"ラベル"はstringまたはstring配列である必要があります');
 }
+
+export function 一覧クエリからキーワードを読む(クエリ: unknown): string | undefined {
+  if (typeof クエリ !== "object" || クエリ === null || !("キーワード" in クエリ)) return undefined;
+  if (typeof クエリ.キーワード !== "string") {
+    throw new 検証エラー('クエリパラメータ"キーワード"はstringである必要があります');
+  }
+  const 値 = クエリ.キーワード.trim();
+  return 値.length === 0 ? undefined : 値;
+}

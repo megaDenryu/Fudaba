@@ -15,6 +15,8 @@ describe("添付拡張子", () => {
     expect(添付拡張子.MIME型から作る("image/jpeg").値).toBe("jpg");
     expect(添付拡張子.MIME型から作る("image/gif").値).toBe("gif");
     expect(添付拡張子.MIME型から作る("image/webp").値).toBe("webp");
+    expect(添付拡張子.MIME型から作る("text/plain; charset=utf-8").値).toBe("txt");
+    expect(添付拡張子.MIME型から作る("application/json").値).toBe("json");
   });
 
   it("対応していないMIME型は検証エラーになる", () => {
@@ -24,5 +26,6 @@ describe("添付拡張子", () => {
 
   it("MIME型を逆引きできる", () => {
     expect(添付拡張子.create("jpg").MIME型).toBe("image/jpeg");
+    expect(添付拡張子.create("txt").MIME型).toBe("text/plain; charset=utf-8");
   });
 });

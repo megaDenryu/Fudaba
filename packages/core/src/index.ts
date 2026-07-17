@@ -20,3 +20,17 @@ export { 札添付一覧 } from "./domain/札添付一覧.js";
 export { 検証エラー } from "./domain/検証エラー.js";
 export { 札未検出エラー } from "./domain/札未検出エラー.js";
 export { 添付未検出エラー } from "./domain/添付未検出エラー.js";
+export {
+  問い選択肢,
+  未回答問い,
+  回答済み問い,
+  type 問い,
+  type 問いDTO,
+  type 未回答問いDTO,
+  type 回答済み問いDTO,
+  type 回答DTO,
+} from "./domain/問い.js";
+export { 問いID } from "./domain/問いID.js";
+export { 問い未検出エラー } from "./domain/問い未検出エラー.js";
+export { 問い回答済みエラー } from "./domain/問い回答済みエラー.js";
+export type { 札コメントDTO, 札関係リンクDTO, 札リンク種別 } from "./infra/札協働リポジトリ.js";

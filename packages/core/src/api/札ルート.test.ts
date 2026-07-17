@@ -388,3 +388,220 @@ describe("Fudabaルート", () => {
     });
   });
 });
+
+describe("Fudaba問いルート", () => {
+  let ストア: 札ストア;
+  let 添付ディレクトリ: string;
+
+  beforeEach(() => {
+    ストア = 札ストア.メモリ上に作る();
+    添付ディレクトリ = mkdtempSync(path.join(tmpdir(), "fudaba-question-test-"));
+  });
+
+  it("キーワードでタイトルと本文を部分一致検索できる", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    await app.inject({ method: "POST", url: "/api/fudaba/items", payload: { 種別: "実装", タイトル: "検索対象", 本文: "alpha", 作成者: "test" } });
+    await app.inject({ method: "POST", url: "/api/fudaba/items", payload: { 種別: "実装", タイトル: "別件", 本文: "beta target", 作成者: "test" } });
+    const タイトル検索 = await app.inject({ method: "GET", url: "/api/fudaba/items?キーワード=検索" });
+    expect(タイトル検索.json()).toEqual([expect.objectContaining({ タイトル: "検索対象" })]);
+    const 本文検索 = await app.inject({ method: "GET", url: "/api/fudaba/items?キーワード=TARGET" });
+    expect(本文検索.json()).toEqual([expect.objectContaining({ タイトル: "別件" })]);
+  });
+
+  afterEach(() => {
+    rmSync(添付ディレクトリ, { recursive: true, force: true });
+  });
+
+  async function 問いを作る(app: ReturnType<typeof アプリを作る>, タイトル = "判定してください"): Promise<number> {
+    const 応答 = await app.inject({
+      method: "POST",
+      url: "/api/fudaba/questions",
+      payload: { タイトル, 本文: "根拠", 作成者: "test-agent" },
+    });
+    expect(応答.statusCode).toBe(201);
+    return idを読む(応答.json());
+  }
+
+  it("問いを既定選択肢で作成し未回答一覧から取得できる", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    const id = await 問いを作る(app);
+    const 応答 = await app.inject({ method: "GET", url: "/api/fudaba/questions?kind=未回答" });
+    expect(応答.statusCode).toBe(200);
+    expect(応答.json()).toEqual([
+      expect.objectContaining({
+        id,
+        kind: "未回答",
+        選択肢一覧: [
+          { id: "yes", ラベル: "はい", ショートカット: "y" },
+          { id: "no", ラベル: "いいえ", ショートカット: "n" },
+          { id: "hold", ラベル: "保留", ショートカット: "s" },
+        ],
+      }),
+    ]);
+  });
+
+  it("問い自身へ根拠画像を添付して取得できる", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    const id = await 問いを作る(app);
+    const 追加 = await app.inject({
+      method: "POST",
+      url: `/api/fudaba/questions/${id}/attachments`,
+      payload: { ファイル名: "evidence.png", データURL: `data:image/png;base64,${一画素PNGのbase64}` },
+    });
+    expect(追加.statusCode).toBe(201);
+    const 追加結果: unknown = 追加.json();
+    if (
+      typeof 追加結果 !== "object" || 追加結果 === null ||
+      !("添付一覧" in 追加結果) || !Array.isArray(追加結果.添付一覧)
+    ) throw new Error("問い添付の応答形式が不正です");
+    expect(追加結果.添付一覧).toEqual([
+      expect.objectContaining({ ファイル名: "evidence.png" }),
+    ]);
+    const 添付 = 追加結果.添付一覧[0];
+    if (typeof 添付 !== "object" || 添付 === null || !("保存名" in 添付) || typeof 添付.保存名 !== "string") {
+      throw new Error("問い添付に保存名がありません");
+    }
+    const 取得 = await app.inject({ method: "GET", url: `/api/fudaba/attachments/${添付.保存名}` });
+    expect(取得.statusCode).toBe(200);
+    expect(取得.headers["content-type"]).toContain("image/png");
+  });
+
+  it("問いへの最初の回答だけを不変レコードとして受理する", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    const id = await 問いを作る(app);
+    const 一回目 = await app.inject({
+      method: "POST",
+      url: `/api/fudaba/questions/${id}/answers`,
+      payload: { 選択肢ID: "yes", 回答者: "user", メモ: "確認済み" },
+    });
+    expect(一回目.statusCode).toBe(201);
+    expect(一回目.json()).toMatchObject({
+      kind: "回答済み",
+      回答: { 連番: 1, 選択肢ID: "yes", 回答者: "user", メモ: "確認済み" },
+    });
+
+    const 二回目 = await app.inject({
+      method: "POST",
+      url: `/api/fudaba/questions/${id}/answers`,
+      payload: { 選択肢ID: "no", 回答者: "other" },
+    });
+    expect(二回目.statusCode).toBe(409);
+  });
+
+  it("存在しない選択肢への回答を400で拒否する", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    const id = await 問いを作る(app);
+    const 応答 = await app.inject({
+      method: "POST",
+      url: `/api/fudaba/questions/${id}/answers`,
+      payload: { 選択肢ID: "unknown", 回答者: "user" },
+    });
+    expect(応答.statusCode).toBe(400);
+  });
+
+  it("複数問いのうち指定した問いの回答だけを待機受信する", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    const 対象外ID = await 問いを作る(app, "対象外");
+    const 対象ID = await 問いを作る(app, "対象");
+    await app.inject({
+      method: "POST",
+      url: `/api/fudaba/questions/${対象外ID}/answers`,
+      payload: { 選択肢ID: "yes", 回答者: "user" },
+    });
+    const 待機 = app.inject({
+      method: "GET",
+      url: `/api/fudaba/questions/answers/wait?after=0&timeoutMs=1000&questionId=${対象ID}`,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await app.inject({
+      method: "POST",
+      url: `/api/fudaba/questions/${対象ID}/answers`,
+      payload: { 選択肢ID: "no", 回答者: "user" },
+    });
+    const 応答 = await 待機;
+    expect(応答.statusCode).toBe(200);
+    expect(応答.json()).toMatchObject({
+      種別: "新着あり",
+      回答一覧: [{ 連番: 2, 問いID: 対象ID, 選択肢ID: "no" }],
+    });
+  });
+
+  it("回答が無い待機はタイムアウトを正常応答する", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    const 応答 = await app.inject({
+      method: "GET",
+      url: "/api/fudaba/questions/answers/wait?after=0&timeoutMs=1",
+    });
+    expect(応答.statusCode).toBe(200);
+    expect(応答.json()).toEqual({ 種別: "タイムアウト", 基準連番: 0 });
+  });
+});
+
+describe("Fudaba札コメント・関係リンクルート", () => {
+  let ストア: 札ストア;
+  let 添付ディレクトリ: string;
+
+  beforeEach(() => {
+    ストア = 札ストア.メモリ上に作る();
+    添付ディレクトリ = mkdtempSync(path.join(tmpdir(), "fudaba-collaboration-test-"));
+  });
+
+  afterEach(() => rmSync(添付ディレクトリ, { recursive: true, force: true }));
+
+  async function 札を作成する(app: ReturnType<typeof アプリを作る>, タイトル: string): Promise<number> {
+    const 応答 = await app.inject({
+      method: "POST", url: "/api/fudaba/items",
+      payload: { 種別: "実装", タイトル, 本文: "本文", 作成者: "test" },
+    });
+    return idを読む(応答.json());
+  }
+
+  it("コメントを本文と独立した不変追記として取得できる", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    const id = await 札を作成する(app, "対象札");
+    const 追加 = await app.inject({
+      method: "POST", url: `/api/fudaba/items/${id}/comments`,
+      payload: { 作成者: "alice", 本文: "調査結果" },
+    });
+    expect(追加.statusCode).toBe(201);
+    const 一覧 = await app.inject({ method: "GET", url: `/api/fudaba/items/${id}/comments` });
+    expect(一覧.json()).toEqual([
+      expect.objectContaining({ 札ID: id, 作成者: "alice", 本文: "調査結果" }),
+    ]);
+  });
+
+  it("親子・依存リンクを札IDから取得できる", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    const 親ID = await 札を作成する(app, "親");
+    const 子ID = await 札を作成する(app, "子");
+    const 追加 = await app.inject({
+      method: "POST", url: "/api/fudaba/item-links",
+      payload: { 元札ID: 親ID, 先札ID: 子ID, 種別: "親子", 作成者: "alice" },
+    });
+    expect(追加.statusCode).toBe(201);
+    const 一覧 = await app.inject({ method: "GET", url: `/api/fudaba/item-links?itemId=${子ID}` });
+    expect(一覧.json()).toEqual([
+      expect.objectContaining({ 元札ID: 親ID, 先札ID: 子ID, 種別: "親子" }),
+    ]);
+  });
+
+  it("自己リンクと同一リンクの重複を拒否する", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    const 一ID = await 札を作成する(app, "一");
+    const 二ID = await 札を作成する(app, "二");
+    const 自己 = await app.inject({
+      method: "POST", url: "/api/fudaba/item-links",
+      payload: { 元札ID: 一ID, 先札ID: 一ID, 種別: "依存", 作成者: "alice" },
+    });
+    expect(自己.statusCode).toBe(400);
+    await app.inject({
+      method: "POST", url: "/api/fudaba/item-links",
+      payload: { 元札ID: 一ID, 先札ID: 二ID, 種別: "依存", 作成者: "alice" },
+    });
+    const 重複 = await app.inject({
+      method: "POST", url: "/api/fudaba/item-links",
+      payload: { 元札ID: 一ID, 先札ID: 二ID, 種別: "依存", 作成者: "bob" },
+    });
+    expect(重複.statusCode).toBe(400);
+  });
+});

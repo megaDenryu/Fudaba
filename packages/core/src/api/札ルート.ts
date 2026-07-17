@@ -13,9 +13,12 @@ import {
   作成内容に絞る,
   IDパラメータを読む,
   一覧クエリからラベルフィルタを読む,
+  一覧クエリからキーワードを読む,
   変更内容に絞る,
 } from "./リクエスト検証.js";
 import type { 札パス } from "./ルートパス型.js";
+import { Fudaba問いルートを登録する } from "./問いルート.js";
+import { Fudaba札協働ルートを登録する } from "./札協働ルート.js";
 
 // Fudabaの3点セットのうち「サーバールート登録関数」。ホスト（ワークスペースサーバー）の
 // Fastifyインスタンスへルートを間借りするだけで、自前のポート・エラーハンドラは持たない
@@ -29,7 +32,11 @@ export function Fudabaルートを登録する(
   app.get("/api/fudaba/items", async (request, reply) =>
     検証エラーを応答に写像する(reply, () => {
       const ラベル一覧 = 一覧クエリからラベルフィルタを読む(request.query);
-      return ストア.一覧を取得する({ ラベル一覧 }).map((札) => 札.toJSON());
+      const キーワード = 一覧クエリからキーワードを読む(request.query);
+      return ストア.一覧を取得する({
+        ラベル一覧,
+        ...(キーワード !== undefined ? { キーワード } : {}),
+      }).map((札) => 札.toJSON());
     }),
   );
 
@@ -62,4 +69,6 @@ export function Fudabaルートを登録する(
   );
 
   Fudaba添付ルートを登録する(app, 依存);
+  Fudaba問いルートを登録する(app, 依存);
+  Fudaba札協働ルートを登録する(app, ストア);
 }

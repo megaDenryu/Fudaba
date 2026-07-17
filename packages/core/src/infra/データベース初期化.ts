@@ -39,6 +39,13 @@ function attachments列を保証する(db: Database.Database): void {
   }
 }
 
+function 問いattachments列を保証する(db: Database.Database): void {
+  const 列一覧 = db.prepare("PRAGMA table_info(fudaba_questions)").all().map(列情報として絞る);
+  if (!列一覧.some((列) => 列.name === "attachments")) {
+    db.exec(`ALTER TABLE fudaba_questions ADD COLUMN attachments TEXT NOT NULL DEFAULT '[]'`);
+  }
+}
+
 // 旧4分類のうち意味が曖昧だった「タスク」「メモ」を、扱い方が分かる名称へ移行する。
 // バグと決定は意味が明確なので維持する。更新は冪等で、既存DBを何度開いても結果は同じ。
 function 旧札種別を移行する(db: Database.Database): void {
@@ -66,8 +73,49 @@ export function データベースを初期化する(db: Database.Database): voi
       updated_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_fudaba_items_updated_at ON fudaba_items(updated_at);
+    CREATE TABLE IF NOT EXISTS fudaba_questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      choices TEXT NOT NULL,
+      related_item_id INTEGER,
+      room_link TEXT,
+      creator TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      attachments TEXT NOT NULL DEFAULT '[]'
+    );
+    CREATE TABLE IF NOT EXISTS fudaba_answers (
+      seq INTEGER PRIMARY KEY AUTOINCREMENT,
+      question_id INTEGER NOT NULL UNIQUE,
+      choice_id TEXT NOT NULL,
+      respondent TEXT NOT NULL,
+      note TEXT NOT NULL,
+      answered_at TEXT NOT NULL,
+      FOREIGN KEY (question_id) REFERENCES fudaba_questions(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_fudaba_answers_question_id ON fudaba_answers(question_id);
+    CREATE TABLE IF NOT EXISTS fudaba_comments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      item_id INTEGER NOT NULL,
+      author TEXT NOT NULL,
+      body TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_fudaba_comments_item_id ON fudaba_comments(item_id, id);
+    CREATE TABLE IF NOT EXISTS fudaba_item_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      source_item_id INTEGER NOT NULL,
+      target_item_id INTEGER NOT NULL,
+      kind TEXT NOT NULL,
+      creator TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      UNIQUE(source_item_id, target_item_id, kind)
+    );
+    CREATE INDEX IF NOT EXISTS idx_fudaba_item_links_source ON fudaba_item_links(source_item_id);
+    CREATE INDEX IF NOT EXISTS idx_fudaba_item_links_target ON fudaba_item_links(target_item_id);
   `);
   labels列を保証する(db);
   attachments列を保証する(db);
+  問いattachments列を保証する(db);
   旧札種別を移行する(db);
 }

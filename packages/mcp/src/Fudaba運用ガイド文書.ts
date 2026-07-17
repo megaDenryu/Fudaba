@@ -21,6 +21,11 @@ Fudabaは人間とAIが同じ作業アイテム「札」を読み書きする台
 8. 所属が決まらないアイデアはラベルなしで投げてよい。分解するAIが適切なラベル
    (リポジトリ名等: jimbo/fudaba/boomyack/agentroom)を付ける。ラベルは事前登録不要で、
    fudaba_update でいつでも後から付け替えられる(渡した配列で既存ラベルを全置換する)。
+9. 人間の判断が必要なら fudaba_question_create で問いを起票し、返された問いIDを保持する。
+10. fudaba_question_wait_answers に複数の問いIDを渡して回答を待つ。タイムアウトは正常なので、
+    同じafterSeqで再度待つ。回答を受け取ったら最大連番を次回のafterSeqにする。
+11. スクリーンショット等の根拠は fudaba_add_attachment で関連札へ追加し、AIが読むときは
+    fudaba_listの保存名を fudaba_get_attachment に渡す。
 
 人間は同じ札をUIで見ている。あなたが更新した内容は次のポーリングでUIに反映される。
 `.trim();
