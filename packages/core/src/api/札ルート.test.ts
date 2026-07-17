@@ -440,6 +440,17 @@ describe("Fudaba問いルート", () => {
     ]);
   });
 
+  it("数十件を連続起票して未回答キューへ欠落なく蓄積できる", async () => {
+    const app = アプリを作る(ストア, 添付ディレクトリ);
+    for (let 番号 = 1; 番号 <= 40; 番号 += 1) {
+      await 問いを作る(app, `連続判定 ${番号}`);
+    }
+    const 応答 = await app.inject({ method: "GET", url: "/api/fudaba/questions?kind=未回答" });
+    expect(応答.statusCode).toBe(200);
+    const 一覧: unknown = 応答.json();
+    expect(Array.isArray(一覧) ? 一覧.length : -1).toBe(40);
+  });
+
   it("問い自身へ根拠画像を添付して取得できる", async () => {
     const app = アプリを作る(ストア, 添付ディレクトリ);
     const id = await 問いを作る(app);

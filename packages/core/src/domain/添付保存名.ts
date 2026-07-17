@@ -3,7 +3,7 @@ import { 検証エラー } from "./検証エラー.js";
 // 16バイトの乱数を16進文字列化した32桁+許可拡張子のみを受理する厳格な形式（ホワイトリスト方式）。
 // GET/DELETEのURLパラメータから受け取った文字列をこの形式に一致させることで、
 // "../" 等のパストラバーサル文字列を構造的に排除する（infra/添付ストレージ.tsのパス組み立てで使用）
-const 保存名パターン = /^[0-9a-f]{32}\.(png|jpg|jpeg|gif|webp)$/;
+const 保存名パターン = /^[0-9a-f]{32}\.(png|jpg|jpeg|gif|webp|txt|json)$/;
 
 export class 添付保存名 {
   private constructor(private readonly 内部値: string) {}

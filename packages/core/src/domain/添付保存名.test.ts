@@ -3,7 +3,7 @@ import { 添付保存名 } from "./添付保存名.js";
 
 describe("添付保存名", () => {
   it("32桁16進数+許可拡張子は受理する", () => {
-    for (const 拡張子 of ["png", "jpg", "jpeg", "gif", "webp"]) {
+    for (const 拡張子 of ["png", "jpg", "jpeg", "gif", "webp", "txt", "json"]) {
       expect(() => 添付保存名.create(`${"a1".repeat(16)}.${拡張子}`)).not.toThrow();
     }
   });
