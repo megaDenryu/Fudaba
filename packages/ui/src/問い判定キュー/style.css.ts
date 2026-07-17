@@ -4,7 +4,7 @@ import { Fudabaテーマ配色, Fudaba警告色 } from "../テーマ";
 export const ルート = style({
   display: "flex", flexDirection: "column", gap: "6px", padding: "8px 14px",
   borderBottom: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
-  backgroundColor: Fudabaテーマ配色.背景, flexShrink: 0,
+  backgroundColor: Fudabaテーマ配色.背景, flex: 1, minHeight: 0, overflowY: "auto",
 });
 export const ヘッダ = style({ display: "flex", alignItems: "center", gap: "10px" });
 export const 見出し = style({ fontSize: "13px", fontWeight: 700 });
@@ -25,14 +25,15 @@ export const メタ = style({ fontSize: "10px", color: Fudabaテーマ配色.テ
 export const 添付領域 = style({ display: "flex", gap: "8px", flexWrap: "wrap", maxHeight: "180px", overflowY: "auto" });
 export const 添付画像 = style({ maxWidth: "260px", maxHeight: "160px", objectFit: "contain", borderRadius: "4px" });
 export const 添付テキスト = style({ whiteSpace: "pre-wrap", fontFamily: "monospace", fontSize: "11px", maxHeight: "150px", overflow: "auto", padding: "6px", border: `1px solid ${Fudabaテーマ配色.パネル境界線}` });
-export const 回答入力行 = style({ display: "flex", gap: "6px", flexWrap: "wrap" });
+export const 回答入力行 = style({ display: "flex", flexDirection: "column", gap: "6px" });
 export const 回答者 = style({
   width: "140px", border: `1px solid ${Fudabaテーマ配色.パネル境界線}`,
   borderRadius: "4px", padding: "5px 8px", backgroundColor: Fudabaテーマ配色.背景,
   color: Fudabaテーマ配色.テキスト主,
 });
 export const メモ = style({
-  flex: 1, minWidth: "180px", minHeight: "34px", resize: "vertical",
+  width: "100%", minWidth: 0, minHeight: "34px", resize: "none", overflow: "hidden",
+  whiteSpace: "pre-wrap", overflowWrap: "anywhere", boxSizing: "border-box",
   border: `1px solid ${Fudabaテーマ配色.パネル境界線}`, borderRadius: "4px",
   padding: "5px 8px", backgroundColor: Fudabaテーマ配色.背景,
   color: Fudabaテーマ配色.テキスト主,

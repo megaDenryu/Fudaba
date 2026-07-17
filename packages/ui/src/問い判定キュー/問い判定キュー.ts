@@ -31,7 +31,10 @@ export class 問い判定キュー extends LV2HtmlComponentBase {
   private readonly _回答者: TextInputC;
   private readonly _メモ: TextAreaC;
 
-  constructor(private readonly _クライアント: 問いクライアント) {
+  constructor(
+    private readonly _クライアント: 問いクライアント,
+    private readonly _件数変更時: (件数: number) => void = () => {},
+  ) {
     super();
     this._件数 = span({ class: styles.件数 });
     this._タイトル = span({ class: styles.タイトル });
@@ -46,6 +49,7 @@ export class 問い判定キュー extends LV2HtmlComponentBase {
       value: 作成者名を読み込む(),
     });
     this._メモ = new TextAreaC({ class: styles.メモ, placeholder: "回答メモ（任意）", rows: 2 });
+    this._メモ.addTextAreaEventListener("input", () => this._メモ.autoFitToContent());
     this._componentRoot = div({ class: styles.ルート }).setAttribute("tabindex", "0").childs([
       div({ class: styles.ヘッダ }).childs([
         span({ text: "人間判定キュー", class: styles.見出し }),
@@ -90,6 +94,7 @@ export class 問い判定キュー extends LV2HtmlComponentBase {
 
   private _現在を描画する(): void {
     const 現在 = this._一覧[this._位置];
+    this._件数変更時(this._一覧.length);
     this._件数.setTextContent(現在 === undefined ? "未回答 0件" : `${this._位置 + 1} / ${this._一覧.length}（未回答）`);
     if (現在 === undefined) {
       this._タイトル.setTextContent("現在、判断待ちの問いはありません");
